@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import PopularTopics from "@/app/blogs/components/PopularTopics";
+import TerminalPopup from "@/app/components/TerminalPopup";
 import blogData from "@/app/blogs/data/blogs.json";
 
 const BlogPage = () => {
@@ -16,6 +17,8 @@ const BlogPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [subscriberEmail, setSubscriberEmail] = useState("");
+  const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const searchRef = useRef(null);
 
   // Filtered blogs
@@ -100,9 +103,16 @@ const BlogPage = () => {
               <input
                 type="email"
                 placeholder="Enter your email to subscribe..."
+                value={subscriberEmail}
+                onChange={(e) => setSubscriberEmail(e.target.value)}
                 className="flex-1 w-full px-4 py-3 rounded-lg border border-surface-300 dark:border-surface-700 bg-white dark:bg-surface-900 text-surface-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
               />
               <button
+                onClick={() => {
+                  if (subscriberEmail.trim()) {
+                    setIsTerminalOpen(true);
+                  }
+                }}
                 className="px-6 py-3 bg-gradient-to-r from-primary to-primary-dark text-white rounded-lg text-md font-medium hover:opacity-90 transition"
               >
                 Subscribe
@@ -326,6 +336,16 @@ const BlogPage = () => {
           </div>
         </section>
       </main>
+
+      {/* Terminal Popup */}
+      <TerminalPopup 
+        isOpen={isTerminalOpen} 
+        onClose={() => {
+          setIsTerminalOpen(false);
+          setSubscriberEmail("");
+        }} 
+        email={subscriberEmail}
+      />
     </div>
   );
 };
