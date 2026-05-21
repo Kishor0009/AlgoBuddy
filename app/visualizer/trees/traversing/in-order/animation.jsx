@@ -198,7 +198,7 @@ export default function InOrderVisualizer() {
   }, []);
 
   return (
-    <div className="min-h-screen mt-16 bg-gray-100 dark:bg-black text-gray-800 dark:text-gray-200">
+    <div className="min-h-screen mt-16 bg-gray-100 dark:bg-violet-950/40 text-gray-800 dark:text-gray-200">
       <Navbar />
       <main className="container mx-auto px-4 sm:px-6 py-8">
         <div className="text-center mb-8">

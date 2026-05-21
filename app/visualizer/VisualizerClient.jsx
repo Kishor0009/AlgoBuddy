@@ -2,14 +2,15 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiArrowLeft, FiSearch, FiChevronRight } from "react-icons/fi";
+import { ArrowLeft, Search, ChevronRight } from "lucide-react";
+import { VISUALIZER_THEMES, getVisualizerTheme } from "@/lib/visualizerThemes";
 
 /* ─── colour + icon theme per DS ─── */
 const DS_THEME = {
   Array: {
     color: "#a435f0",
     bg: "#faf5ff",
-    darkBg: "#160d22",
+    darkBg: "rgb(22, 13, 34)",
     border: "#e9d5ff",
     label: "7 algorithms",
     bars: [65, 30, 80, 45, 55, 20, 70],
@@ -22,7 +23,7 @@ const DS_THEME = {
   Stack: {
     color: "#2563eb",
     bg: "#eff6ff",
-    darkBg: "#0d1627",
+    darkBg: "rgb(13, 22, 39)",
     border: "#bfdbfe",
     label: "8 algorithms",
     stack: ["push(42)", "push(17)", "peek → 17"],
@@ -35,7 +36,7 @@ const DS_THEME = {
   Queue: {
     color: "#059669",
     bg: "#f0fdf4",
-    darkBg: "#0d1f14",
+    darkBg: "rgb(13, 31, 20)",
     border: "#d1fae5",
     label: "10 algorithms",
     icon: (c) => (
@@ -47,7 +48,7 @@ const DS_THEME = {
   "Linked List": {
     color: "#d97706",
     bg: "#fffbeb",
-    darkBg: "#1a1506",
+    darkBg: "rgb(26, 21, 6)",
     border: "#fde68a",
     label: "10 algorithms",
     icon: (c) => (
@@ -59,7 +60,7 @@ const DS_THEME = {
   Tree: {
     color: "#7c3aed",
     bg: "#faf5ff",
-    darkBg: "#160d22",
+    darkBg: "rgb(22, 13, 34)",
     border: "#e9d5ff",
     label: "20 algorithms",
     icon: (c) => (
@@ -71,7 +72,7 @@ const DS_THEME = {
   Graph: {
     color: "#dc2626",
     bg: "#fef2f2",
-    darkBg: "#1f0d0d",
+    darkBg: "rgb(31, 13, 13)",
     border: "#fecaca",
     label: "8 algorithms",
     icon: (c) => (
@@ -90,7 +91,7 @@ const getTheme = (t) =>
     ),
     color: "#6b7280",
     bg: "#f9fafb",
-    darkBg: "#111",
+    darkBg: "rgb(17, 17, 17)",
     border: "#e5e7eb",
     label: "",
   };
@@ -378,13 +379,19 @@ function DSCard({ section, theme, onClick, delay }) {
           <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
           <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
           <span className="w-3 h-3 rounded-full bg-[#28c840]" />
-          <span className="ml-2 text-[12px] font-mono text-[#6b7280] dark:text-[#9e9e9e]">
+          <span className="ml-2 text-[12px] font-mono text-surface-500 dark:text-surface-400">
             {section.title.toLowerCase().replace(/\s/g, "")}.js
           </span>
         </div>
 
         {/* card body */}
-        <div className="p-5 bg-white dark:bg-[#1c1d1f]">
+        <div
+          className="p-5 bg-white dark:bg-surface-900 transition-colors duration-200"
+          style={{
+            backgroundColor: "white",
+          }}
+          data-theme-card={section.title}
+        >
           {/* icon + title */}
           <div className="flex items-center gap-3 mb-3">
             <div
@@ -394,23 +401,17 @@ function DSCard({ section, theme, onClick, delay }) {
               {theme.icon(theme.color)}
             </div>
             <div>
-              <h3
-                className="text-[18px] font-extrabold text-[#1a1a1a] dark:text-[#f7f9fa]"
-                style={{
-                  letterSpacing: "-0.02em",
-                  fontFamily: "'Inter', sans-serif",
-                }}
-              >
+              <h3 className="text-[18px] font-extrabold text-surface-900 ">
                 {section.title}
               </h3>
-              <p className="text-[12px] text-[#6b7280] dark:text-[#9e9e9e] font-medium">
+              <p className="text-[12px] text-surface-500 dark:text-surface-400 font-medium">
                 {count} algorithm{count !== 1 ? "s" : ""} to explore
               </p>
             </div>
           </div>
 
           {/* description */}
-          <p className="text-[13px] text-[#4b5563] dark:text-[#9e9e9e] leading-relaxed mb-4">
+          <p className="text-[13px] text-surface-600 leading-relaxed mb-4">
             {section.desc}
           </p>
 
@@ -431,7 +432,7 @@ function DSCard({ section, theme, onClick, delay }) {
             style={{ background: theme.color }}
           >
             Explore {section.title}
-            <FiChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" />
+            <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" />
           </div>
         </div>
       </div>
@@ -458,13 +459,14 @@ function ModuleView({ section, theme, onBack }) {
       <div
         className="rounded-2xl border p-8 sm:p-10 mb-10"
         style={{ background: theme.bg, borderColor: theme.border }}
+        data-theme-banner={section.title}
       >
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-2 text-[13px] font-bold text-[#6b7280] dark:text-[#9e9e9e]
-            hover:text-[#1a1a1a] dark:hover:text-white transition-colors duration-200 mb-5"
+          className="inline-flex items-center gap-2 text-[13px] font-bold text-surface-500 dark:text-surface-400
+            hover:text-surface-900 dark:hover:text-surface-600 transition-colors duration-200 mb-5"
         >
-          <FiArrowLeft className="w-4 h-4" /> Back to all topics
+          <ArrowLeft className="w-4 h-4" /> Back to all topics
         </button>
 
         <div className="flex items-center gap-4 mb-3">
@@ -476,16 +478,11 @@ function ModuleView({ section, theme, onBack }) {
           </div>
           <div>
             <h2
-              className="text-[2rem] sm:text-[2.8rem] font-black text-[#1a1a1a] dark:text-[#f7f9fa]"
-              style={{
-                letterSpacing: "-0.03em",
-                lineHeight: 1.1,
-                fontFamily: "'Inter', sans-serif",
-              }}
+              className="text-[2rem] sm:text-[2.8rem] font-black leading-[1.1] tracking-tighter text-surface-900 "
             >
               {section.title}
             </h2>
-            <p className="text-[14px] text-[#4b5563] dark:text-[#9e9e9e] mt-1">
+            <p className="text-[14px] text-surface-600 mt-1">
               {count} algorithm{count !== 1 ? "s" : ""} · {section.desc}
             </p>
           </div>
@@ -513,7 +510,7 @@ function ModuleView({ section, theme, onBack }) {
                   key={ii}
                   href={item.path}
                   className="group/item flex items-center justify-between p-4 rounded-xl border
-                    bg-white dark:bg-[#2d2f31] hover:shadow-md transition-all duration-200"
+                    bg-white dark:bg-surface-800 hover:shadow-md transition-all duration-200"
                   style={{ borderColor: theme.border }}
                 >
                   <div className="flex items-center gap-3">
@@ -527,14 +524,14 @@ function ModuleView({ section, theme, onBack }) {
                       {ii + 1}
                     </div>
                     <span
-                      className="text-[14px] font-semibold text-[#1a1a1a] dark:text-[#f7f9fa]
-                      group-hover/item:text-[#a435f0] transition-colors"
+                      className="text-[14px] font-semibold text-surface-900 dark:text-surface-50
+                      group-hover/item:text-primary transition-colors"
                     >
                       {item.name}
                     </span>
                   </div>
-                  <FiChevronRight
-                    className="w-4 h-4 text-[#d1d5db] dark:text-[#3e4143]
+                  <ChevronRight
+                    className="w-4 h-4 text-surface-300 dark:text-surface-600
                       group-hover/item:translate-x-1 transition-all duration-200"
                     style={{ color: theme.color + "60" }}
                   />
@@ -597,29 +594,67 @@ export default function VisualizerClient({ initialSections }) {
   }, [search, initialSections]);
 
   return (
-    <div style={{ fontFamily: "'Inter', 'Source Sans 3', sans-serif" }}>
+    <div>
+      <style>{`
+        /* Dark mode gradient backgrounds for visualizer cards */
+        .dark [data-theme-card="Array"] { 
+          background: linear-gradient(135deg, rgba(109, 40, 217, 0.2) 0%, rgba(168, 85, 247, 0.08) 100%);
+        }
+        .dark [data-theme-card="Stack"] { 
+          background: linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(96, 165, 250, 0.08) 100%);
+        }
+        .dark [data-theme-card="Queue"] { 
+          background: linear-gradient(135deg, rgba(5, 150, 105, 0.2) 0%, rgba(52, 211, 153, 0.08) 100%);
+        }
+        .dark [data-theme-card="Linked List"] { 
+          background: linear-gradient(135deg, rgba(217, 119, 6, 0.2) 0%, rgba(251, 146, 60, 0.08) 100%);
+        }
+        .dark [data-theme-card="Tree"] { 
+          background: linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(168, 85, 247, 0.08) 100%);
+        }
+        .dark [data-theme-card="Graph"] { 
+          background: linear-gradient(135deg, rgba(220, 38, 38, 0.2) 0%, rgba(248, 113, 113, 0.08) 100%);
+        }
+        
+        /* Dark mode gradient backgrounds for module view hero banners */
+        .dark [data-theme-banner="Array"] { 
+          background: linear-gradient(135deg, rgba(109, 40, 217, 0.15) 0%, rgba(168, 85, 247, 0.05) 100%);
+          border-color: rgba(168, 85, 247, 0.3);
+        }
+        .dark [data-theme-banner="Stack"] { 
+          background: linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(96, 165, 250, 0.05) 100%);
+          border-color: rgba(96, 165, 250, 0.3);
+        }
+        .dark [data-theme-banner="Queue"] { 
+          background: linear-gradient(135deg, rgba(5, 150, 105, 0.15) 0%, rgba(52, 211, 153, 0.05) 100%);
+          border-color: rgba(52, 211, 153, 0.3);
+        }
+        .dark [data-theme-banner="Linked List"] { 
+          background: linear-gradient(135deg, rgba(217, 119, 6, 0.15) 0%, rgba(251, 146, 60, 0.05) 100%);
+          border-color: rgba(251, 146, 60, 0.3);
+        }
+        .dark [data-theme-banner="Tree"] { 
+          background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(168, 85, 247, 0.05) 100%);
+          border-color: rgba(168, 85, 247, 0.3);
+        }
+        .dark [data-theme-banner="Graph"] { 
+          background: linear-gradient(135deg, rgba(220, 38, 38, 0.15) 0%, rgba(248, 113, 113, 0.05) 100%);
+          border-color: rgba(248, 113, 113, 0.3);
+        }
+      `}</style>
       {/* ═══════ CONTENT AREA ═══════ */}
       <section
-        className="px-5 pt-28 pb-20 min-h-screen"
-        style={{
-          background:
-            "linear-gradient(180deg, #ffffff 0%, #eef2ff 20%, #f0fdf4 60%, #faf5ff 100%)",
-          fontFamily: "'Inter', 'Source Sans 3', sans-serif",
-        }}
+        className="px-5 pt-28 pb-20 min-h-screen bg-gradient-to-b from-white via-surface-50 to-purple-50/40 dark:from-surface-900 dark:via-surface-900 dark:to-surface-900"
       >
         <div className="max-w-[1100px] mx-auto">
           {/* page heading + search */}
           <div className="text-center mb-14">
             <h1
-              className="text-[2.6rem] sm:text-[3.4rem] lg:text-[4rem] font-extrabold leading-[1.08] text-[#1c1d1f] dark:text-[#f7f9fa] mb-4"
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                letterSpacing: "-0.03em",
-              }}
+              className="text-[2.6rem] sm:text-[3.4rem] lg:text-[4rem] font-black leading-[1.08] tracking-tighter text-surface-900 dark:text-surface-50 mb-4"
             >
-              Algorithm <span className="text-[#a435f0]">Visualizer</span>
+              Algorithm <span className="text-primary">Visualizer</span>
             </h1>
-            <p className="text-[1.1rem] text-[#4b5563] dark:text-[#9e9e9e] leading-relaxed max-w-[480px] mx-auto">
+            <p className="text-[1.1rem] text-surface-600 dark:text-surface-400 leading-relaxed max-w-[480px] mx-auto">
               Pick any data structure, tap an algorithm, and watch it run step
               by step. Learning DSA has never been this fun.
             </p>
@@ -637,7 +672,7 @@ export default function VisualizerClient({ initialSections }) {
               >
                 {flatResults.length > 0 ? (
                   <div className="max-w-3xl mx-auto">
-                    <p className="text-[13px] font-bold text-[#6b7280] uppercase tracking-wider mb-5">
+                    <p className="text-[13px] font-bold text-surface-500 uppercase tracking-wider mb-5">
                       {flatResults.length} result
                       {flatResults.length !== 1 ? "s" : ""}
                     </p>
@@ -659,14 +694,14 @@ export default function VisualizerClient({ initialSections }) {
                               {t.icon(t.color)}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <span className="text-[14px] font-semibold text-[#1a1a1a] group-hover/r:text-[#a435f0] transition-colors">
+                              <span className="text-[14px] font-semibold text-surface-900 group-hover/r:text-primary transition-colors">
                                 {item.name}
                               </span>
-                              <span className="block text-[11px] text-[#6b7280]">
+                              <span className="block text-[11px] text-surface-500">
                                 {item.ds}
                               </span>
                             </div>
-                            <FiChevronRight className="w-4 h-4 text-[#d1d5db] group-hover/r:translate-x-1 transition-all" />
+                            <ChevronRight className="w-4 h-4 text-surface-300 group-hover/r:translate-x-1 transition-all" />
                           </Link>
                         );
                       })}
@@ -674,14 +709,13 @@ export default function VisualizerClient({ initialSections }) {
                   </div>
                 ) : (
                   <div className="text-center py-16">
-                    <span className="text-[48px] block mb-4">🔍</span>
-                    <h3
-                      className="text-2xl font-bold text-[#1a1a1a] mb-2"
-                      style={{ letterSpacing: "-0.02em" }}
-                    >
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-surface-100 dark:bg-surface-800">
+                      <Search className="h-6 w-6 text-surface-400" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-surface-900 mb-2">
                       No results found
                     </h3>
-                    <p className="text-[#6b7280] text-[15px]">
+                    <p className="text-surface-500 text-[15px]">
                       Try a different search term
                     </p>
                   </div>
@@ -718,11 +752,13 @@ export default function VisualizerClient({ initialSections }) {
 
                 {filtered.length === 0 && (
                   <div className="text-center py-16">
-                    <span className="text-[48px] block mb-4">🔍</span>
-                    <h3 className="text-2xl font-bold text-[#1a1a1a] mb-2">
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-surface-100 dark:bg-surface-800">
+                      <Search className="h-6 w-6 text-surface-400" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-surface-900 mb-2">
                       No topics found
                     </h3>
-                    <p className="text-[#6b7280]">
+                    <p className="text-surface-500">
                       Try a different search term
                     </p>
                   </div>
