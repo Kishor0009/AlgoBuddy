@@ -3,16 +3,42 @@ import React, { useState, useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import ArrayGenerator from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
+import { saveToStorage, loadFromStorage,removeFromStorage, } from "@/utils/storage";
+
+const getFontSize = (value) => {
+  const len = String(value).length;
+  if (len <= 2) return "text-lg";
+  if (len === 3) return "text-sm";
+  return "text-xs";
+};
 
 const BubbleSortVisualizer = () => {
-  const [array, setArray] = useState([]);
+  
   const [sorting, setSorting] = useState(false);
   const [sorted, setSorted] = useState(false);
-  const [speed, setSpeed] = useState(1);
+  const [array, setArray] = useState(() =>
+    loadFromStorage("bubble-array", [])
+  );
+
+  const [speed, setSpeed] = useState(() =>
+    loadFromStorage("bubble-speed", 1)
+  );
+  const [currentStep, setCurrentStep] = useState(0);
+  const [totalSteps, setTotalSteps] = useState(0);
+
+  useEffect(() => {
+    saveToStorage("bubble-array", array);
+  }, [array]);
+
+  useEffect(() => {
+    saveToStorage("bubble-speed", speed);
+  }, [speed]);
   const [comparisons, setComparisons] = useState(0);
   const [swaps, setSwaps] = useState(0);
   const [currentIndices, setCurrentIndices] = useState({ i: -1, j: -1 });
   const animationRef = useRef(null);
+  const isSortingRef = useRef(false);
+  const resolveRef = useRef(null);
 
   // Handle array generation from child component
   const handleArrayGenerated = (newArray) => {
@@ -25,34 +51,46 @@ const BubbleSortVisualizer = () => {
   const resetStats = () => {
     setComparisons(0);
     setSwaps(0);
+    setCurrentStep(0);
+    setTotalSteps(0);
     setCurrentIndices({ i: -1, j: -1 });
     if (animationRef.current) {
       clearTimeout(animationRef.current);
     }
   };
 
+  // Helper: cancellable delay
+  const cancellableDelay = () =>
+    new Promise((resolve) => {
+      resolveRef.current = resolve;
+      animationRef.current = setTimeout(resolve, 1000 / speed);
+    });
+
   // Optimized bubble sort
   const bubbleSort = async () => {
     if (sorted || sorting || array.length === 0) return;
 
+    isSortingRef.current = true;
     setSorting(true);
     let arr = [...array];
     let n = arr.length;
     let tempSwaps = 0;
     let tempComparisons = 0;
+    setTotalSteps(Math.floor((n * (n - 1)) / 2));
+    setCurrentStep(0);
 
     for (let i = 0; i < n - 1; i++) {
       let swapped = false;
 
       for (let j = 0; j < n - i - 1; j++) {
+        if (!isSortingRef.current) return;
         setCurrentIndices({ i: j, j: j + 1 });
         tempComparisons++;
         setComparisons(tempComparisons);
+        setCurrentStep((prev) => prev + 1);
 
-        await new Promise(
-          (resolve) =>
-            (animationRef.current = setTimeout(resolve, 1000 / speed))
-        );
+        await cancellableDelay();
+        if (!isSortingRef.current) return;
 
         if (arr[j] > arr[j + 1]) {
           const bars = document.querySelectorAll(".bar");
@@ -81,22 +119,27 @@ const BubbleSortVisualizer = () => {
           setSwaps(tempSwaps);
           setArray([...arr]);
 
-          await new Promise(
-            (resolve) =>
-              (animationRef.current = setTimeout(resolve, 1000 / speed))
-          );
+          await cancellableDelay();
+          if (!isSortingRef.current) return;
         }
       }
 
       if (!swapped) break;
     }
 
+    isSortingRef.current = false;
     setSorting(false);
     setSorted(true);
   };
 
   // Reset everything
   const reset = () => {
+    // Unblock any suspended async loop immediately
+    isSortingRef.current = false;
+    if (resolveRef.current) {
+      resolveRef.current();
+      resolveRef.current = null;
+    }
     if (animationRef.current) {
       clearTimeout(animationRef.current);
     }
@@ -189,6 +232,19 @@ const BubbleSortVisualizer = () => {
               <div className="text-xl sm:text-2xl">{swaps}</div>
             </div>
           </div>
+          <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
+            <div className="font-medium">Step:</div>
+            <div className="text-xl font-bold">
+              {totalSteps > 0 ? `${currentStep} / ${totalSteps}` : "—"}
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {currentStep > 0 && !sorted
+                ? `Comparing index ${currentIndices.i} and ${currentIndices.j}`
+                : sorted
+                ? "Sorting complete!"
+                : "Start sorting to see steps"}
+            </div>
+          </div>
         </div>
 
         {/* Visualization */}
@@ -206,7 +262,7 @@ const BubbleSortVisualizer = () => {
                 return (
                   <div key={index} className="flex flex-col items-center">
                     <div
-                      className={`bar w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center rounded-lg border-2 shadow-md dark:shadow-blue-900 transition-all duration-300 text-sm sm:text-lg font-bold
+                      className={`bar w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center rounded-lg border-2 shadow-md dark:shadow-blue-900 transition-all duration-300 ${getFontSize(value)} font-bold
                             ${
                               isComparing
                                 ? "bg-yellow-400 dark:bg-yellow-400 border-yellow-600 dark:border-yellow-600 dark:text-gray-900"
