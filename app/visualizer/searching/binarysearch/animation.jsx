@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { gsap } from "gsap";
 import { Play, Pause } from "lucide-react";
 import ResetButton from "@/app/components/ui/resetButton";
@@ -35,6 +35,11 @@ const BinarySearch = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
+  const [stepExplanation, setStepExplanation] = useState("");
+  const [stepCount, setStepCount] = useState(0);
+
+  // FIX: pendingStart flag triggers animation AFTER array renders
+  const [pendingStart, setPendingStart] = useState(false);
 
   const [speed, setSpeed] = useState(() =>
     loadFromStorage("binary-speed", 1)
@@ -49,6 +54,7 @@ const BinarySearch = () => {
     h: 0,
     arr: [],
     targetValue: 0,
+    step: 0,
   });
 
   const formRef = useRef(null);
@@ -82,8 +88,11 @@ const BinarySearch = () => {
     setFoundIndex(-1);
     setMessage("");
     setMessageType("");
+    setStepExplanation("");
+    setStepCount(0);
     setIsAnimating(false);
     setIsPaused(false);
+    setPendingStart(false);
     isPausedRef.current = false;
 
     setArrayElements("");
@@ -95,18 +104,21 @@ const BinarySearch = () => {
     }
 
     elementRefs.current.forEach((ref) => {
-      gsap.to(ref, {
-        backgroundColor: "#E5E7EB",
-        borderColor: "#D1D5DB",
-        duration: 0,
-      });
+      if (ref) {
+        gsap.to(ref, {
+          backgroundColor: "#E5E7EB",
+          borderColor: "#D1D5DB",
+          duration: 0,
+        });
+      }
     });
   };
 
   const generateRandomArray = () => {
     if (isAnimating) return;
 
-    const size = Math.floor(Math.random() * 4) + 2;
+    // FIX: improved range 5–10 for more educational value
+    const size = Math.floor(Math.random() * 6) + 5;
 
     const elements = Array.from({ length: size }, () =>
       Math.floor(Math.random() * 100)
@@ -115,108 +127,38 @@ const BinarySearch = () => {
     setArrayElements(elements.join(", "));
   };
 
-  const handleGo = (e) => {
-    e.preventDefault();
-
-    clearTimeout(animationRef.current);
-
-    setArray([]);
-    setI(-1);
-    setJ(-1);
-    setMid(-1);
-    setFoundIndex(-1);
-    setMessage("");
-    setMessageType("");
-    setIsAnimating(false);
-
-    if (!arrayElements || !target) {
-      setMessage("Please fill in all fields.");
-      setMessageType("warning");
-      return;
-    }
-
-    const rawElements = arrayElements
-      .split(",")
-      .map((el) => el.trim());
-
-    const hasDecimals = rawElements.some((el) =>
-      el.includes(".")
-    );
-
-    if (hasDecimals) {
-      setMessage(
-        "Only integers are supported. Please remove decimal values."
-      );
-      setMessageType("warning");
-      return;
-    }
-
-    const elements = rawElements.map((el) =>
-      parseInt(el)
-    );
-
-    const targetValue = parseInt(target);
-
-    if (elements.some(isNaN) || isNaN(targetValue)) {
-      setMessage("Invalid array elements or target.");
-      setMessageType("warning");
-      return;
-    }
-
-    const isSorted = elements.every(
-      (el, idx) => idx === 0 || el >= elements[idx - 1]
-    );
-
-    if (!isSorted) {
-      setMessage("Array must be sorted in ascending order.");
-      setMessageType("warning");
-      return;
-    }
-
-    setArray(elements);
-    setI(0);
-    setJ(elements.length - 1);
-    setMid(-1);
-    setFoundIndex(-1);
-    setMessage("");
-    setMessageType("");
-    setIsAnimating(true);
-    setIsPaused(false);
-    isPausedRef.current = false;
-
-    searchStateRef.current = {
-      l: 0,
-      h: elements.length - 1,
-      arr: elements,
-      targetValue,
-    };
-
-    animateBinarySearch();
-  };
-
-  const animateBinarySearch = () => {
-    const { l, h, arr, targetValue } =
-      searchStateRef.current;
-
+  // FIX: animateBinarySearch is now a stable useCallback so it can be
+  // safely referenced in effects and togglePlayPause without stale closures.
+  const animateBinarySearch = useCallback(() => {
+    const { l, h, arr, targetValue } = searchStateRef.current;
+    // FIX: delay is read from speedRef on EVERY call, so mid-animation
+    // speed changes take effect immediately on the very next step.
     const delay = 1500 / speedRef.current;
 
     if (l > h) {
-      setMessage(
-        `Element ${targetValue} not found in the array.`
-      );
-
+      setMessage(`Element ${targetValue} not found in the array.`);
       setMessageType("error");
+      setStepExplanation(
+        `Search range exhausted (low > high). The element ${targetValue} does not exist in this array.`
+      );
       setIsAnimating(false);
       return;
     }
 
     const m = Math.floor((l + h) / 2);
+    const currentStep = searchStateRef.current.step + 1;
+    searchStateRef.current.step = currentStep;
 
     setI(l);
     setJ(h);
     setMid(m);
+    setStepCount(currentStep);
+
+    const midExplanation = `Step ${currentStep}: low=${l}, high=${h} → mid = ⌊(${l} + ${h}) / 2⌋ = ${m}. Comparing arr[${m}] = ${arr[m]} with target ${targetValue}.`;
+    setStepExplanation(midExplanation);
 
     elementRefs.current.forEach((ref, index) => {
+      if (!ref) return;
       if (index === m) {
         gsap.to(ref, {
           backgroundColor: "#EAB308",
@@ -241,12 +183,11 @@ const BinarySearch = () => {
     animationRef.current = setTimeout(() => {
       if (arr[m] === targetValue) {
         setFoundIndex(m);
-
-        setMessage(
-          `Element ${targetValue} found at index ${m}!`
-        );
-
+        setMessage(`Element ${targetValue} found at index ${m}!`);
         setMessageType("success");
+        setStepExplanation(
+          `✓ arr[${m}] = ${arr[m]} equals target ${targetValue}. Found at index ${m} after ${currentStep} step${currentStep > 1 ? "s" : ""}!`
+        );
         setIsAnimating(false);
 
         gsap.to(elementRefs.current[m], {
@@ -254,35 +195,135 @@ const BinarySearch = () => {
           borderColor: "#15803D",
           duration: 0.3,
         });
-      } else {
-        if (arr[m] < targetValue) {
-          searchStateRef.current.l = m + 1;
-        } else {
-          searchStateRef.current.h = m - 1;
-        }
+      } else if (arr[m] < targetValue) {
+        setStepExplanation(
+          `arr[${m}] = ${arr[m]} < target ${targetValue} → target is in the RIGHT half. Discard left side. New low = ${m + 1}.`
+        );
+        searchStateRef.current.l = m + 1;
 
-        if (!isPausedRef.current) {
-          animateBinarySearch();
-        }
+        animationRef.current = setTimeout(() => {
+          if (!isPausedRef.current) {
+            animateBinarySearch();
+          }
+        }, delay * 0.6);
+      } else {
+        setStepExplanation(
+          `arr[${m}] = ${arr[m]} > target ${targetValue} → target is in the LEFT half. Discard right side. New high = ${m - 1}.`
+        );
+        searchStateRef.current.h = m - 1;
+
+        animationRef.current = setTimeout(() => {
+          if (!isPausedRef.current) {
+            animateBinarySearch();
+          }
+        }, delay * 0.6);
       }
     }, delay);
+  }, []); // stable — reads all live values via refs
+
+  const handleGo = (e) => {
+    e.preventDefault();
+
+    clearTimeout(animationRef.current);
+
+    setArray([]);
+    setI(-1);
+    setJ(-1);
+    setMid(-1);
+    setFoundIndex(-1);
+    setMessage("");
+    setMessageType("");
+    setStepExplanation("");
+    setStepCount(0);
+    setIsAnimating(false);
+    setPendingStart(false);
+
+    if (!arrayElements || !target) {
+      setMessage("Please fill in all fields.");
+      setMessageType("warning");
+      return;
+    }
+
+    const rawElements = arrayElements.split(",").map((el) => el.trim());
+
+    const hasDecimals = rawElements.some((el) => el.includes("."));
+
+    if (hasDecimals) {
+      setMessage(
+        "Only integers are supported. Please remove decimal values."
+      );
+      setMessageType("warning");
+      return;
+    }
+
+    const elements = rawElements.map((el) => parseInt(el));
+    const targetValue = parseInt(target);
+
+    if (elements.some(isNaN) || isNaN(targetValue)) {
+      setMessage("Invalid array elements or target.");
+      setMessageType("warning");
+      return;
+    }
+
+    const isSorted = elements.every(
+      (el, idx) => idx === 0 || el >= elements[idx - 1]
+    );
+
+    if (!isSorted) {
+      setMessage("Array must be sorted in ascending order.");
+      setMessageType("warning");
+      return;
+    }
+
+    searchStateRef.current = {
+      l: 0,
+      h: elements.length - 1,
+      arr: elements,
+      targetValue,
+      step: 0,
+    };
+
+    setArray(elements);
+    setI(0);
+    setJ(elements.length - 1);
+    setMid(-1);
+    setFoundIndex(-1);
+    setMessage("");
+    setMessageType("");
+    setIsAnimating(true);
+    setIsPaused(false);
+    isPausedRef.current = false;
+
+    // FIX: signal the effect to start animation after the array renders
+    setPendingStart(true);
   };
 
-  const togglePlayPause = () => {
+  // FIX: start animation only after array has actually rendered into the DOM
+  useEffect(() => {
+    if (pendingStart && array.length > 0) {
+      setPendingStart(false);
+      animateBinarySearch();
+    }
+  }, [pendingStart, array, animateBinarySearch]);
+
+  const togglePlayPause = useCallback(() => {
     setIsPaused((prev) => {
       const newPaused = !prev;
       isPausedRef.current = newPaused;
       if (!newPaused) {
+        // FIX: clear any pending timeout before resuming to prevent
+        // multiple concurrent animation chains on rapid toggle
+        clearTimeout(animationRef.current);
         animateBinarySearch();
       }
       return newPaused;
     });
-  };
+  }, [animateBinarySearch]);
 
   const togglePlayPauseRef = useRef(togglePlayPause);
   useEffect(() => {
     togglePlayPauseRef.current = togglePlayPause;
-  });
+  }, [togglePlayPause]);
 
   const isAnimatingRef = useRef(isAnimating);
   useEffect(() => {
@@ -351,9 +392,7 @@ const BinarySearch = () => {
               type="text"
               id="arrayElements"
               value={arrayElements}
-              onChange={(e) =>
-                setArrayElements(e.target.value)
-              }
+              onChange={(e) => setArrayElements(e.target.value)}
               className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-[#a435f0] focus:outline-none focus:ring-2 focus:ring-[#a435f0]/30 transition duration-300"
               placeholder="e.g., 1, 3, 4, 6, 8"
               disabled={isAnimating}
@@ -383,9 +422,7 @@ const BinarySearch = () => {
               type="number"
               id="target"
               value={target}
-              onChange={(e) =>
-                setTarget(e.target.value)
-              }
+              onChange={(e) => setTarget(e.target.value)}
               className="w-full sm:max-w-xs p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-[#a435f0] focus:outline-none focus:ring-2 focus:ring-[#a435f0]/30 transition duration-300"
               placeholder="eg. 4"
               disabled={isAnimating}
@@ -397,11 +434,7 @@ const BinarySearch = () => {
                 isAnimating={isAnimating}
                 disabled={isAnimating}
               />
-
-              <ResetButton
-                onReset={handleReset}
-                isAnimating={isAnimating}
-              />
+              <ResetButton onReset={handleReset} isAnimating={isAnimating} />
             </div>
           </div>
         </div>
@@ -445,57 +478,97 @@ const BinarySearch = () => {
       </form>
 
       {message && (
-        <div
-          className={`max-w-3xl mx-auto mb-8 p-4 rounded-lg ${messageClass}`}
-        >
-          <p className="text-center font-medium">
-            {message}
-          </p>
+        <div className={`max-w-3xl mx-auto mb-8 p-4 rounded-lg ${messageClass}`}>
+          <p className="text-center font-medium">{message}</p>
         </div>
       )}
 
       {array.length > 0 && (
-        <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6 text-center">
-            Array Visualization
-          </h2>
+        <div className="max-w-4xl mx-auto space-y-6">
 
-          <div className="flex flex-wrap gap-4 justify-center">
-            {array.map((element, index) => {
-              const labels = [];
+          {/* Step Explanation Panel */}
+          {stepExplanation && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="flex items-center gap-2 bg-[#a435f0]/10 dark:bg-[#a435f0]/20 px-4 py-2 border-b border-[#a435f0]/20">
+                <span className="w-2 h-2 rounded-full bg-[#a435f0] animate-pulse"></span>
+                <span className="text-sm font-semibold text-[#a435f0] dark:text-[#c56eff] uppercase tracking-wide">
+                  Step Explanation
+                </span>
+                {stepCount > 0 && (
+                  <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
+                    Iteration #{stepCount}
+                  </span>
+                )}
+              </div>
+              <div className="px-4 py-3">
+                <p className="text-gray-700 dark:text-gray-200 text-sm leading-relaxed font-mono">
+                  {stepExplanation}
+                </p>
+              </div>
 
-              if (index === i) labels.push("i");
-              if (index === mid) labels.push("Mid");
-              if (index === j) labels.push("j");
+              {/* Legend */}
+              <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-700 flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400">
+                <span>
+                  <span className="font-semibold text-yellow-600 dark:text-yellow-400">■ Yellow</span> = mid index
+                </span>
+                <span>
+                  <span className="font-semibold text-blue-500 dark:text-blue-400">■ Blue</span> = active search range
+                </span>
+                <span>
+                  <span className="font-semibold text-gray-400">■ Gray</span> = eliminated
+                </span>
+                <span>
+                  <span className="font-semibold text-green-500">■ Green</span> = found
+                </span>
+              </div>
+            </div>
+          )}
 
-              return (
-                <div
-                  key={index}
-                  className="flex flex-col items-center"
-                >
-                  <div
-                    ref={(el) => (elementRefs.current[index] = el)}
-                    className={`w-16 h-16 flex items-center justify-center rounded-lg border-2 transition-all duration-300 ${getFontSize(element)} font-medium ${
-                      index === foundIndex
-                        ? "bg-green-500 dark:bg-green-600 border-green-700 dark:border-green-400 text-gray-800 dark:text-white"
-                        : index === mid
-                        ? "bg-yellow-500 dark:bg-yellow-600 border-yellow-700 dark:border-yellow-400 text-gray-800 dark:text-white"
-                        : index >= i && index <= j
-                        ? "bg-blue-300 dark:bg-blue-700 border-blue-500 dark:border-blue-400 text-gray-800 dark:text-white"
-                        : "bg-gray-200 dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-white"
-                    }`}
-                  >
-                    {element}
+          {/* Array Visualization */}
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6 text-center">
+              Array Visualization
+            </h2>
+
+            <div className="flex flex-wrap gap-4 justify-center">
+              {array.map((element, index) => {
+                const labels = [];
+                if (index === i) labels.push("low");
+                if (index === mid) labels.push("mid");
+                if (index === j) labels.push("high");
+
+                return (
+                  <div key={index} className="flex flex-col items-center">
+                    <div
+                      ref={(el) => (elementRefs.current[index] = el)}
+                      className={`w-16 h-16 flex items-center justify-center rounded-lg border-2 transition-all duration-300 ${getFontSize(element)} font-medium`}
+                    >
+                      {element}
+                    </div>
+
+                    <div className="mt-1 text-xs text-gray-600 dark:text-gray-400 text-center font-mono">
+                      {labels.map((label, idx) => (
+                        <div
+                          key={idx}
+                          className={
+                            label === "mid"
+                              ? "text-yellow-600 dark:text-yellow-400 font-semibold"
+                              : label === "low" || label === "high"
+                              ? "text-blue-500 dark:text-blue-400 font-semibold"
+                              : ""
+                          }
+                        >
+                          {label}
+                        </div>
+                      ))}
+                      <div className="text-gray-400 dark:text-gray-600 text-[10px]">
+                        [{index}]
+                      </div>
+                    </div>
                   </div>
-
-                  <div className="mt-1 text-sm text-gray-600 dark:text-gray-400 text-center">
-                    {labels.map((label, idx) => (
-                      <div key={idx}>{label}</div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
