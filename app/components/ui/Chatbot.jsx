@@ -348,8 +348,12 @@ export default function Chatbot() {
       {/* Turnstile captcha (invisible) */}
       <div className="w-0 h-0 overflow-hidden" aria-hidden="true">
         <Turnstile
-          ref={turnstileRef}
-          siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+          siteKey={
+            process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.startsWith("1x") || 
+            process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.startsWith("0x")
+              ? process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+              : "1x00000000000000000000AA"
+          }
           onSuccess={(token) => setCaptchaToken(token)}
           options={{ size: "invisible" }}
         />
