@@ -22,7 +22,7 @@
 
 
 <!-- Quick Links -->
-[**✨ Features**](#-features) · [**🛠 Tech Stack**](#-tech-stack) · [**🚀 Quick Start**](#-quick-start) · [**📁 Project Structure**](#-project-structure) · [**🤝 Contributing**](#-contributing) · [**📜 License**](#-license)
+[**✨ Features**](#-features) · [**📷 Screenshots**](#-screenshots) · [**🛠 Tech Stack**](#-tech-stack) · [**🚀 Quick Start**](#-quick-start) · [**📁 Project Structure**](#-project-structure) · [**🤝 Contributing**](#-contributing) · [**📜 License**](#-license)
 
 <br/>
 
@@ -40,26 +40,24 @@
 Most DSA resources are walls of text and static diagrams. **AlgoBuddy changes that** by letting you interact with every data structure and algorithm in real time.
 
 <table>
-<tr>
-<td width="50%">
+<td width="52%">
 
-### 😫 The Problem
+## 😫 The Problem
 - Static textbooks don't show algorithm flow
 - Copying code doesn't build understanding
 - No feedback loop on what you've mastered
 - Hard to stay motivated without visible progress
 
 </td>
-<td width="50%">
+<td width="47%">
 
-### ✅ The AlgoBuddy Way
+## ✅ The AlgoBuddy Way
 - **Watch** algorithms execute step-by-step
 - **Interact** with data structures directly
 - **Track** your learning journey with streaks
 - **Read** companion blogs for deeper theory
 
 </td>
-</tr>
 </table>
 
 <br/>
@@ -115,40 +113,6 @@ Animated, step-by-step visualizations for a wide range of DSA topics:
 - Peek / isEmpty
 - Polish Notation
 - Array & LL impl.
-## 📸 Screenshots
-
-### 🏠 Home Page
-
-![Home Page](public/screenshots/Home-page.png)
-
----
-
-### 🔐 Authentication Page
-
-![Login Page](public/screenshots/login-page.png)
-
----
-
-### 🧠 Visualizer Dashboard
-
-![Visualizer](public/screenshots/visualizer-page.png)
-
----
-
-### 🔄 Queue Visualization
-
-![Queue Visualization](public/screenshots/queue-visualization-page.png)
-
----
-
-### 📚 Queue Operations
-
-![Queue Operations](public/screenshots/queue-operations-page.png)
-
-
-
-
-## Tech Stack
 
 </td>
 <td>
@@ -212,6 +176,7 @@ Animated, step-by-step visualizations for a wide range of DSA topics:
 </td>
 </tr>
 </table>
+
 <br/>
 
 ## 👤 User System & Progress Tracking
@@ -222,6 +187,7 @@ Animated, step-by-step visualizations for a wide range of DSA topics:
 | 📊 **Dashboard** | Module-level progress tracking per data structure |
 | 🔥 **Streaks** | Activity heatmap (last 90 days) + daily streak counter |
 | 🤖 **AI Assistant** | Built-in chatbot powered by **Gemini** for concept help |
+
 <br/>
 <br/>
 
@@ -233,6 +199,7 @@ Animated, step-by-step visualizations for a wide range of DSA topics:
 | 🔎 **Full-text Search** | Instantly find relevant articles |
 | ⏱ **Reading Time** | Estimated reading time on every article |
 | 📖 **Rich Content** | In-depth articles on core DSA concepts |
+
 <br/>
 <br/>
 
@@ -244,6 +211,40 @@ Animated, step-by-step visualizations for a wide range of DSA topics:
 | 📱 **Responsive** | Optimized for mobile, tablet, and desktop |
 | 🎬 **Animations** | Smooth visualizations via GSAP + Framer Motion |
 | ✨ **Particle Effects** | Interactive background using tsParticles |
+
+<br/>
+<br/>
+
+## 📸 Screenshots
+
+### 🏠 Home Page
+
+![Home Page](public/screenshots/Home-page.png)
+
+---
+
+### 🔐 Authentication Page
+
+![Login Page](public/screenshots/login-page.png)
+
+---
+
+### 🧠 Visualizer Dashboard
+
+![Visualizer](public/screenshots/visualizer-page.png)
+
+---
+
+### 🔄 Queue Visualization
+
+![Queue Visualization](public/screenshots/queue-visualization-page.png)
+
+---
+
+### 📚 Queue Operations
+
+![Queue Operations](public/screenshots/queue-operations-page.png)
+
 <br/>
 <br/>
 
