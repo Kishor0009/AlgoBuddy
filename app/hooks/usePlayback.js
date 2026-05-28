@@ -18,7 +18,7 @@ export default function usePlayback(initialSpeed = 1) {
       isPausedRef.current = next;
 
       // If UNPAUSING, resolve the paused promise instantly so the sorting loop resumes
-      if (!next && pauseResolveRef.current) {
+      if (!next && pauseResolveRef.current && pausePromiseRef.current) {
         pauseResolveRef.current();
         pausePromiseRef.current = null;
         pauseResolveRef.current = null;
