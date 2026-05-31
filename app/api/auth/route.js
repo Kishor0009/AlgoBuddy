@@ -6,35 +6,13 @@ import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
 
-// Service-role client is only used for signup so it can create users regardless
-// of RLS policies. It is never used for login — that goes through the anon client
-// so that Supabase's own per-user RLS applies from the first request.
-function getValidUrl(value) {
-  if (!value) return null;
-  const trimmed = String(value).trim();
-  if (!trimmed || trimmed.startsWith("Your ")) return null;
-  try {
-    const url = new URL(trimmed);
-    return url.protocol === "http:" || url.protocol === "https:" ? trimmed : null;
-  } catch {
-    return null;
-  }
-}
-
-function getValidKey(value) {
-  if (!value) return null;
-  const trimmed = String(value).trim();
-  return trimmed && !trimmed.startsWith("Your ") ? trimmed : null;
-}
-
-const supabaseUrl = getValidUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
-const supabaseAnonKey = getValidKey(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-const supabaseServiceKey = getValidKey(process.env.SUPABASE_SERVICE_KEY);
-
-const supabaseAdmin =
-  supabaseUrl && supabaseServiceKey
-    ? createClient(supabaseUrl, supabaseServiceKey)
-    : null;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? String(process.env.NEXT_PUBLIC_SUPABASE_URL).trim()
+  : null;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ? String(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY).trim()
+  : null;
+const turnstileConfigured = process.env.TURNSTILE_CONFIGURED === "true";
 
 const AUTH_RATE_LIMIT_PREFIX = "auth";
 
@@ -160,13 +138,11 @@ export async function POST(req) {
 
     const ip = getClientIp(req.headers);
 
-    const isSecretMissing = 
-      !process.env.TURNSTILE_SECRET_KEY || 
-      process.env.TURNSTILE_SECRET_KEY.includes("Your") ||
-      process.env.TURNSTILE_SECRET_KEY === "undefined";
+    const turnstileSecretKey = process.env.TURNSTILE_SECRET_KEY;
+    const isConfigured = turnstileConfigured && turnstileSecretKey && turnstileSecretKey !== "undefined";
 
     let captcha;
-    if (isSecretMissing) {
+    if (!isConfigured) {
       const isProduction = process.env.NODE_ENV === "production";
       const explicitBypass = process.env.TURNSTILE_BYPASS === "true";
 
@@ -178,12 +154,11 @@ export async function POST(req) {
       }
 
       if (!explicitBypass) {
-        console.warn("TURNSTILE_SECRET_KEY is not set. Skipping captcha verification. This should only be used for local development.");
+        console.warn("TURNSTILE_SECRET_KEY is not configured. Skipping captcha verification. This should only be used for local development.");
       }
 
       captcha = { ok: true };
     } else {
-      // If a real key exists (like on production), run the strict verification check!
       captcha = await verifyTurnstile(String(captchaToken), { ip });
     }
 
@@ -213,12 +188,18 @@ export async function POST(req) {
     }
 
     if (action === "signup") {
-      if (!supabaseAdmin) {
+      const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY
+        ? String(process.env.SUPABASE_SERVICE_KEY).trim()
+        : null;
+
+      if (!supabaseUrl || !supabaseServiceKey) {
         return new Response(
           JSON.stringify({ success: false, message: "Auth server is not configured." }),
           { status: 500, headers: { "Content-Type": "application/json" } },
         );
       }
+
+      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
       const { error } = await supabaseAdmin.auth.signUp({
         email,
