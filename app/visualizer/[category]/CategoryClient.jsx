@@ -2,7 +2,8 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { FiArrowLeft, FiChevronRight } from "react-icons/fi";
+import { FiChevronRight } from "react-icons/fi";
+import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
 
 const DS_THEME = {
   Array: {
@@ -151,13 +152,13 @@ export default function CategoryClient({ section }) {
       >
         {/* Header Card */}
         <div className="mb-8 transition-colors duration-300">
-          <button
-            onClick={() => router.push("/visualizer")}
-            className="inline-flex items-center gap-2 text-[13px] font-bold text-surface-500 dark:text-surface-400
-              hover:text-surface-900 dark:hover:text-surface-100 transition-colors duration-200 mb-5"
-          >
-            <FiArrowLeft className="w-4 h-4" /> Back to all topics
-          </button>
+          <div className="mb-4">
+            <Breadcrumbs paths={[
+              { name: "Home", href: "/" },
+              { name: "Visualizer", href: "/visualizer" },
+              { name: section.title }
+            ]} />
+          </div>
 
           <div className="flex items-center gap-5">
             {theme.icon && (
