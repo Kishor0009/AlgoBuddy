@@ -1,15 +1,12 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import { gsap } from 'gsap';
-import Footer from '@/app/components/footer';
 import ResetButton from '@/app/components/ui/resetButton';
-import ExploreOther from '@/app/components/ui/exploreOther';
-import Content from "@/app/visualizer/linkedList/types/circular/content";
-import Quiz from '@/app/visualizer/linkedList/types/circular/quiz';
-import CodeBlock from "@/app/visualizer/linkedList/types/circular/codeBlock";
-import BackToTop from '@/app/components/ui/backtotop';
-import GoBackButton from "@/app/components/ui/goback";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import {
+  VisualizerCard,
+  VisualizerInteractiveLayout,
+} from "@/app/visualizer/components/VisualizerInteractiveLayout";
 
 const CircularLinkedListVisualizer = () => {
   const [inputValue, setInputValue] = useState('');
@@ -118,55 +115,44 @@ const CircularLinkedListVisualizer = () => {
   }, [list]);
 
   return (
-    <div className="min-h-screen max-h-auto bg-gray-100 dark:bg-zinc-950 text-gray-800 dark:text-gray-200">
-      <main className="container mx-auto px-6 pt-16 pb-4">
-        {/* go back block here */}
-        <div className="mt-10 sm:mt-10">
-          <GoBackButton />
+    <VisualizerInteractiveLayout>
+      <p className="text-center text-lg text-[#6b7280] dark:text-[#9ca3af]">
+        Visualize Circular Linked List Operations
+      </p>
+      
+      {/* Input Form */}
+      <VisualizerCard className="mb-0">
+        <div className="mb-4">
+          <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm font-medium">
+            Node Value
+          </label>
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            placeholder="Enter value"
+            disabled={isAnimating}
+            onKeyDown={(e) => e.key === 'Enter' && addNode()}
+          />
         </div>
-
-        {/* main logic here */}
-        <h1 className="text-4xl md:text-4xl mt-6 ml-10 font-bold text-left text-gray-900 dark:text-white mb-0">
-          <span className="text-black dark:text-white">Circular Linked List</span>
-        </h1>
-        <div className="bg-black border border-none dark:bg-gray-600 w-100 h-[2px] rounded-xl mt-2 mb-5"></div>
-        <Content />
-        <p className="text-lg text-center text-gray-600 dark:text-gray-400 mb-8">
-          Visualize Circular Linked List Operations
-        </p>
-        
-        {/* Input Form */}
-        <div className="max-w-md mx-auto bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md mb-8 border border-gray-200 dark:border-gray-700">
-          <div className="mb-4">
-            <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm font-medium">
-              Node Value
-            </label>
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              placeholder="Enter value"
-              disabled={isAnimating}
-              onKeyDown={(e) => e.key === 'Enter' && addNode()}
-            />
-          </div>
-          <div className="flex gap-4">
-            <button
-              onClick={addNode}
-              className={`flex-1 py-3 rounded-lg transition-all ${isAnimating || !inputValue ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed' : 'bg-primary hover:bg-primary-dark'}`}
-              disabled={isAnimating || !inputValue}
-            >
-              Add Node
-            </button>
-            <ResetButton onReset={resetList} isAnimating={isAnimating} />
-          </div>
+        <div className="flex gap-4">
+          <button
+            onClick={addNode}
+            className={`flex-1 py-3 rounded-lg transition-all ${isAnimating || !inputValue ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed text-gray-500' : 'bg-primary hover:bg-primary-dark text-white'}`}
+            disabled={isAnimating || !inputValue}
+          >
+            Add Node
+          </button>
+          <ResetButton onReset={resetList} isAnimating={isAnimating} />
         </div>
+      </VisualizerCard>
 
-        {/* Visualization Area */}
-          <div className="relative max-w-4xl mx-auto">
+      {/* Visualization Area */}
+      <VisualizerCard>
+        <div className="relative max-w-4xl mx-auto">
           {list.length === 0 ? (
-            <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-dashed border-gray-300 dark:border-gray-700">
+            <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl">
               <div className="inline-block p-6 bg-gray-100 dark:bg-gray-700 rounded-full mb-4">
                 <svg className="w-12 h-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
@@ -284,26 +270,8 @@ const CircularLinkedListVisualizer = () => {
             </div>
           )}
         </div>
-
-        <p className="text-lg text-center text-gray-600 dark:text-gray-400 mt-8 mb-8">
-          Test Your Knowledge before moving forward!
-        </p>
-        <Quiz />
-
-        <CodeBlock/>
-
-        <ExploreOther
-          title="Explore Other Types"
-          links={[
-            { text: "Singly Linked List", url: "./singly" },
-            { text: "Doubly Linked List", url: "./doubly" },
-          ]}
-        />
-
-      </main>
-      <BackToTop/>
-      <Footer />
-    </div>
+      </VisualizerCard>
+    </VisualizerInteractiveLayout>
   );
 };
 
