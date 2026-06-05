@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useUser } from "@/features/user/UserContext";
 import { supabase } from "@/lib/supabase";
-import { Moon, Sun, Menu, X, ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
+import { Moon, Sun, Menu, X, ChevronDown, Swords, LogOut } from "lucide-react";
 import { NAV_LINKS } from "./navLinks";
 
 function getStoredTheme() {
@@ -140,11 +140,10 @@ export default function Navbar() {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-[9998] h-[72px] bg-white dark:bg-udemy-dark-bg flex items-center transition-all duration-200 ${
-          scrolled
+        className={`fixed top-0 left-0 right-0 z-[9998] h-[72px] bg-white dark:bg-udemy-dark-bg flex items-center transition-all duration-200 ${scrolled
             ? "border-b border-surface-200 dark:border-udemy-dark-border shadow-sm"
             : "border-b border-transparent"
-        }`}
+          }`}
       >
         <div className="w-full max-w-[1200px] mx-auto px-8 flex items-center justify-between h-full">
           <Link
@@ -157,19 +156,18 @@ export default function Navbar() {
           {/* Desktop Links with Auth Interception */}
           <div className="hidden md:flex items-center gap-7">
             {NAV_LINKS.map((l) => {
-              const dynamicHref = (l.href === "/dashboard" && !user) ? "/login" : l.href;
-              
+              const dynamicHref = l.href;
+
               return (
                 <Link
                   key={l.href}
                   href={dynamicHref}
                   data-text={l.label}
                   aria-current={isActive(l.href) ? "page" : undefined}
-                  className={`relative text-[15px] flex flex-col items-center justify-center transition-colors duration-150 focus-ring after:block after:content-[attr(data-text)] after:invisible after:font-semibold after:h-0 after:overflow-hidden ${
-                    isActive(l.href)
+                  className={`relative text-[15px] flex flex-col items-center justify-center transition-colors duration-150 focus-ring after:block after:content-[attr(data-text)] after:invisible after:font-semibold after:h-0 after:overflow-hidden ${isActive(l.href)
                       ? "text-primary dark:text-primary font-semibold"
                       : "text-surface-600 dark:text-surface-400 font-medium hover:text-surface-900 dark:hover:text-white"
-                  }`}
+                    }`}
                 >
                   {l.label}
                 </Link>
@@ -212,14 +210,14 @@ export default function Navbar() {
                     </div>
 
                     <Link
-                      href="/dashboard"
+                      href="/arena"
                       onClick={() =>
                         setUserMenuOpen(false)
                       }
                       className="flex items-center gap-2.5 px-4 py-3 text-[14px] font-medium text-surface-900 dark:text-[#f5f5f5] hover:bg-surface-50 dark:hover:bg-udemy-dark-border transition-colors focus-ring"
                     >
-                      <LayoutDashboard className="w-4 h-4 text-surface-500" />
-                      My Dashboard
+                      <Swords className="w-4 h-4 text-surface-500" />
+                      Arena
                     </Link>
 
                     <button
@@ -248,17 +246,16 @@ export default function Navbar() {
               onClick={toggleTheme}
               aria-label={
                 themeMounted
-                  ? `Switch to ${
-                      theme === "light"
-                        ? "dark"
-                        : "light"
-                    } mode`
+                  ? `Switch to ${theme === "light"
+                    ? "dark"
+                    : "light"
+                  } mode`
                   : "Toggle theme"
               }
               className="w-9 h-9 flex items-center justify-center rounded-full text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-udemy-dark-surface transition-colors focus-ring"
             >
               {!themeMounted ||
-              theme === "light" ? (
+                theme === "light" ? (
                 <Moon className="w-5 h-5" />
               ) : (
                 <Sun className="w-5 h-5" />
@@ -292,7 +289,7 @@ export default function Navbar() {
         >
           <div className="py-2">
             {NAV_LINKS.map((l) => {
-              const dynamicHref = (l.href === "/dashboard" && !user) ? "/login" : l.href;
+              const dynamicHref = l.href;
 
               return (
                 <Link
@@ -306,11 +303,10 @@ export default function Navbar() {
                       ? "page"
                       : undefined
                   }
-                  className={`block px-6 py-3.5 text-[16px] font-medium transition-colors focus-ring ${
-                    isActive(l.href)
+                  className={`block px-6 py-3.5 text-[16px] font-medium transition-colors focus-ring ${isActive(l.href)
                       ? "text-primary bg-primary/5 dark:bg-primary/10"
                       : "text-surface-700 dark:text-surface-400 hover:bg-surface-50 dark:hover:bg-udemy-dark-surface hover:text-surface-900 dark:hover:text-white"
-                  }`}
+                    }`}
                 >
                   {l.label}
                 </Link>
@@ -325,16 +321,15 @@ export default function Navbar() {
               className="mb-3 h-[44px] w-full flex items-center justify-center gap-2 text-[15px] font-semibold text-surface-900 dark:text-white border border-surface-300 dark:border-udemy-dark-border rounded-full hover:border-primary hover:text-primary transition-all focus-ring"
               aria-label={
                 themeMounted
-                  ? `Switch to ${
-                      theme === "light"
-                        ? "dark"
-                        : "light"
-                    } mode`
+                  ? `Switch to ${theme === "light"
+                    ? "dark"
+                    : "light"
+                  } mode`
                   : "Toggle theme"
               }
             >
               {!themeMounted ||
-              theme === "light" ? (
+                theme === "light" ? (
                 <>
                   <Moon className="w-4 h-4" />
                   Dark mode
@@ -354,13 +349,13 @@ export default function Navbar() {
                 </p>
 
                 <Link
-                  href="/dashboard"
+                  href="/arena"
                   onClick={() =>
                     setMenuOpen(false)
                   }
                   className="h-[44px] flex items-center justify-center text-[15px] font-semibold border border-surface-300 dark:border-udemy-dark-border rounded-full text-surface-900 dark:text-white hover:border-primary hover:text-primary transition-all focus-ring"
                 >
-                  My Dashboard
+                  Arena
                 </Link>
 
                 <button
