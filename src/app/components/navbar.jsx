@@ -27,6 +27,17 @@ function applyTheme(nextTheme) {
   window.localStorage.setItem("theme", nextTheme);
 }
 
+function getInitials(name) {
+  if (!name) return "??";
+  const cleanName = name.includes("@") ? name.split("@")[0] : name;
+  const parts = cleanName.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return parts[0].slice(0, 2).toUpperCase();
+}
+
+
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -187,16 +198,20 @@ export default function Navbar() {
                   }
                   className="flex items-center gap-2 rounded-full px-3 py-1.5 border border-surface-200 dark:border-surface-700 hover:border-primary transition-colors focus-ring"
                 >
-                  <Image
-                    src={user.user_metadata?.avatar_url || user.user_metadata?.picture || `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(
-                      user.email
-                    )}`}
-                    alt="avatar"
-                    width={28}
-                    height={28}
-                    unoptimized
-                    className="w-7 h-7 rounded-full object-cover"
-                  />
+                  {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
+                    <Image
+                      src={user.user_metadata.avatar_url || user.user_metadata.picture}
+                      alt="avatar"
+                      width={28}
+                      height={28}
+                      unoptimized
+                      className="w-7 h-7 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light flex items-center justify-center text-[11px] font-bold">
+                      {getInitials(user.user_metadata?.name || user.email)}
+                    </div>
+                  )}
 
                   <ChevronDown className="w-3.5 h-3.5 text-surface-500" />
                 </button>

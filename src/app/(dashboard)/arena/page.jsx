@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@/features/user/UserContext";
 import UpcomingTournament from "@/app/components/dashboard/UpcomingTournament";
@@ -48,8 +49,26 @@ const LEADERBOARD_ROWS = [
   { rank: 5, name: "Ananya", rating: 2105 },
 ];
 
+function getInitials(name) {
+  if (!name) return "??";
+  const cleanName = name.includes("@") ? name.split("@")[0] : name;
+  const parts = cleanName.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return parts[0].slice(0, 2).toUpperCase();
+}
+
 export default function ArenaPage() {
   const { user, loading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/login");
+    }
+  }, [user, loading, router]);
+
   const [activeTab, setActiveTab] = useState("home"); // home, live, ranked, friend, leaderboard, streak, tournaments, badges, history
 
   // Modals state
@@ -98,6 +117,14 @@ export default function ArenaPage() {
     setActiveDuelProblem(matchConfig.topic);
     setDuelSimulatorOpen(true);
   };
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-neutral-900">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <section className="bg-slate-50/50 dark:bg-neutral-900 min-h-screen text-slate-800 dark:text-neutral-200">
@@ -225,14 +252,26 @@ export default function ArenaPage() {
 
                   {/* Top 3 Avatars Podium Graphic */}
                   <div className="flex gap-4 items-end pr-2 select-none">
-                    {/* 2nd Place */}
+                    {/* 2nd Place (Logged in User) */}
                     <div className="flex flex-col items-center">
-                      <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-xs shadow border-2 border-slate-600 mb-1.5">
-                        PK
+                      <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-xs shadow border-2 border-slate-600 mb-1.5 overflow-hidden">
+                        {user?.user_metadata?.avatar_url || user?.user_metadata?.picture ? (
+                          <img
+                            src={user.user_metadata.avatar_url || user.user_metadata.picture}
+                            alt="avatar"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light flex items-center justify-center text-xs font-bold">
+                            {getInitials(currentUserStats.name || user?.email)}
+                          </div>
+                        )}
                       </div>
-                      <span className="text-[10px] text-slate-300 block font-semibold mb-1">Pankaj</span>
-                      <span className="text-[9px] text-slate-400 block mb-2">2320 XP</span>
-                      <div className="w-14 h-14 bg-slate-800 border-t border-slate-700 rounded-t-lg flex items-center justify-center font-bold text-slate-400 shadow-lg text-lg">
+                      <span className="text-[10px] text-slate-300 block font-semibold mb-1 truncate max-w-[64px]">
+                        {(currentUserStats.name || "Pankaj").split(" ")[0]}
+                      </span>
+                      <span className="text-[9px] text-slate-400 block mb-2">{currentUserStats.xp || 2320} XP</span>
+                      <div className="w-14 h-12 bg-slate-800 border-t border-slate-700 rounded-t-lg flex items-center justify-center font-bold text-slate-400 shadow-lg text-lg">
                         2
                       </div>
                     </div>
