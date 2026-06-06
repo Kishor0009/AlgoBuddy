@@ -28,6 +28,7 @@ export default function useVisualizerKeyboard({
   onReset,
   onSpeedChange,
   onTogglePlayPause,
+  onTogglePlay,
   speed,
   sorting,
   sorted,
@@ -35,6 +36,8 @@ export default function useVisualizerKeyboard({
 }) {
   useEffect(() => {
     if (!enabled) return;
+
+    const togglePlayHandler = onTogglePlayPause || onTogglePlay;
 
     function handleKeyDown(e) {
       // Never fire while the user is typing in a form field
@@ -44,13 +47,17 @@ export default function useVisualizerKeyboard({
       switch (e.key) {
         case " ":
           e.preventDefault(); // prevent page scroll
-          if (onTogglePlayPause && sorting) {
-            onTogglePlayPause();
+          if (togglePlayHandler && sorting) {
+            togglePlayHandler();
           } else if (sorting) {
             onReset?.();
           } else if (!sorted) {
             // Space while idle → Start
-            onStart?.();
+            if (onStart) {
+              onStart();
+            } else if (togglePlayHandler) {
+              togglePlayHandler();
+            }
           }
           break;
 
@@ -77,5 +84,5 @@ export default function useVisualizerKeyboard({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [enabled, onStart, onReset, onSpeedChange, onTogglePlayPause, speed, sorting, sorted]);
+  }, [enabled, onStart, onReset, onSpeedChange, onTogglePlayPause, onTogglePlay, speed, sorting, sorted]);
 }

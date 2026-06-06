@@ -274,7 +274,7 @@ export default function BinarySearchAnimation() {
   }, [isPlaying, currentFrame, frames.length, speed]);
 
   const handleGo = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (parsedArray.length === 0) {
       setErrorMsg("Please enter at least one integer value.");
       return;
@@ -298,6 +298,10 @@ export default function BinarySearchAnimation() {
   };
 
   const togglePlay = () => {
+    if (!isVisualizing) {
+      handleGo();
+      return;
+    }
     if (currentFrame === frames.length - 1) {
       setCurrentFrame(0);
       setIsPlaying(true);

@@ -51,7 +51,7 @@ const SumAnimation = () => {
   }, [isPlaying, currentFrame, frames.length, speed]);
 
   const handleGo = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     const n = parseInt(nVal, 10);
     if (isNaN(n) || n < 0) {
       setErrorMsg("Please enter a non-negative integer.");
@@ -75,6 +75,10 @@ const SumAnimation = () => {
   };
 
   const togglePlay = () => {
+    if (!isVisualizing) {
+      handleGo();
+      return;
+    }
     if (currentFrame === frames.length - 1) {
       setCurrentFrame(0);
       setIsPlaying(true);

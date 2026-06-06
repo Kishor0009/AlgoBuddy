@@ -94,7 +94,7 @@ const SubsequencesAnimation = () => {
   }, [isPlaying, currentFrame, frames.length, speed]);
 
   const handleGo = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (parsedArray.length === 0) {
       setErrorMsg("Please enter a valid comma-separated array of integers.");
       return;
@@ -117,6 +117,10 @@ const SubsequencesAnimation = () => {
   };
 
   const togglePlay = () => {
+    if (!isVisualizing) {
+      handleGo();
+      return;
+    }
     if (currentFrame === frames.length - 1) {
       setCurrentFrame(0);
       setIsPlaying(true);

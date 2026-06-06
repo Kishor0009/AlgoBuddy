@@ -99,7 +99,7 @@ const HanoiAnimation = () => {
   }, [isPlaying, currentFrame, frames.length, speed]);
 
   const handleGo = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     const n = parseInt(nVal, 10);
     if (isNaN(n) || n < 1) {
       setErrorMsg("Please enter an integer >= 1.");
@@ -123,6 +123,10 @@ const HanoiAnimation = () => {
   };
 
   const togglePlay = () => {
+    if (!isVisualizing) {
+      handleGo();
+      return;
+    }
     if (currentFrame === frames.length - 1) {
       setCurrentFrame(0);
       setIsPlaying(true);
