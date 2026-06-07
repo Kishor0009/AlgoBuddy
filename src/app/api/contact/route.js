@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { checkRateLimit } from "@/lib/rateLimit";
+import { checkRateLimit, checkGlobalSmtpQuota } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
 
@@ -27,20 +27,29 @@ export async function POST(req) {
     const { allowed, remaining, resetAt } =
       await checkRateLimit(`contact:${ip}`);
     if (!allowed) {
-  const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
+      const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
 
-  return Response.json(
-    { message: "Too many requests. Please try again later." },
-    {
-      status: 429,
-      headers: {
-        "Retry-After": retryAfter.toString(),
-        "X-RateLimit-Limit": "5",
-        "X-RateLimit-Remaining": "0",
-      },
+      return Response.json(
+        { message: "Too many requests. Please try again later." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": retryAfter.toString(),
+            "X-RateLimit-Limit": "5",
+            "X-RateLimit-Remaining": "0",
+          },
+        }
+      );
     }
-  );
-}
+
+    // --- SMTP Quota Protection ---
+    const smtpQuota = await checkGlobalSmtpQuota(500);
+    if (!smtpQuota.allowed) {
+      return Response.json(
+        { message: "Daily contact form limit reached. Please try again tomorrow." },
+        { status: 429 }
+      );
+    }
 
     let body;
     try {
