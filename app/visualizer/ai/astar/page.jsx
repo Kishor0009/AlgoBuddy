@@ -1,14 +1,7 @@
 
 
-import Animation from "./animation";
-import ExploreOther from "@/app/components/ui/exploreOther";
-import Code from "./codeBlock";
-import Quiz from "./quiz";
-import Content from "./content";
-import ModuleCard from "@/app/components/ui/ModuleCard";
-import VisualizerPageLayout, { createVisualizerPaths } from "@/app/visualizer/components/VisualizerPageLayout";
-import { MODULE_MAPS } from "@/lib/modulesMap";
 import ClientVisualizer from "./ClientVisualizer";
+
 
 export const metadata = {
   title: "A* Search | Step-by-Step Animation",
