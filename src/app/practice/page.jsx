@@ -19,7 +19,11 @@ import {
   BookOpen,
   Play,
   ExternalLink,
-  ScrollText
+  ScrollText,
+  Home,
+  Trophy,
+  Zap,
+  User
 } from "lucide-react";
 
 import PracticeSidebar from "@/app/components/practice/PracticeSidebar";
@@ -371,14 +375,14 @@ export default function PracticePage() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-neutral-600" />
               <input
                 type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search problems, topics or companies..."
                 className="w-full h-12 pl-12 pr-10 rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-850 text-sm text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-neutral-600 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition shadow-sm"
               />
-              {search && (
+              {searchQuery && (
                 <button
-                  onClick={() => setSearch("")}
+                  onClick={() => setSearchQuery("")}
                   aria-label="Clear search"
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors"
                 >
