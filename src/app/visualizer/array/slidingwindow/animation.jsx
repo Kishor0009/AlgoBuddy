@@ -34,8 +34,8 @@ const Animation = () => {
   
   const [isAnimating, setIsAnimating] = useState(false);
 
-  const animationRef = useRef(null);
   const visualizerRef = useRef(null);
+  const animationRef = useRef(null);
   const wasPausedRef = useRef(false);
   const stateQueueRef = useRef([]);
   const currentStateIdxRef = useRef(0);
@@ -95,6 +95,8 @@ const Animation = () => {
     }
 
     const state = stateQueueRef.current[currentStateIdxRef.current];
+    const delay = 1500 / 1; // Replace speedRef.current with actual speed value
+
 
     elementRefs.current.forEach((ref, index) => {
       if (!ref) return;
