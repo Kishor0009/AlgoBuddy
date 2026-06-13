@@ -298,10 +298,16 @@ export default function PracticePage() {
     return user.user_metadata?.name || user.email?.split("@")[0] || "Guest User";
   }, [user]);
 
-  const nextProblem = useMemo(() => {
-  return allProblems.find(
+  const dailyChallenge = useMemo(() => {
+  const unsolvedProblems = allProblems.filter(
     (problem) => getStatus(problem.id) !== "Completed"
   );
+
+  if (unsolvedProblems.length === 0) return null;
+
+  const today = new Date().getDate();
+
+  return unsolvedProblems[today % unsolvedProblems.length];
 }, [allProblems, progress]);
 
   // Seed values if not loaded
@@ -511,6 +517,31 @@ export default function PracticePage() {
                 duration={stats.estimatedTime}
                 onBackToSessions={() => toast.success("You are at the main problem list dashboard.")}
               />
+
+              {dailyChallenge && (
+                  <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-5 text-white shadow-lg">
+                    <h3 className="text-lg font-black">
+                      🎯 Challenge of the Day
+                    </h3>
+
+                    <p className="mt-2 font-semibold">
+                      {dailyChallenge.name}
+                    </p>
+
+                    <p className="text-sm opacity-90">
+                      Difficulty: {dailyChallenge.difficulty}
+                    </p>
+
+                    <a
+                      href={dailyChallenge.practiceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block mt-3 px-4 py-2 bg-white text-purple-600 rounded-lg font-bold"
+                    >
+                      Solve Challenge
+                    </a>
+                  </div>
+                )}
 
               {/* Tab navigation */}
               <div className="flex border-b border-slate-200 dark:border-neutral-800">
