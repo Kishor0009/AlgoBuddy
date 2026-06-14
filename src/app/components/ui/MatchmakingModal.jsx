@@ -43,8 +43,12 @@ export default function MatchmakingModal({ isOpen, onClose, onMatchFound, curren
       setStatusIdx((prev) => (prev < SEARCH_STATUSES.length - 1 ? prev + 1 : prev));
     }, 1800);
 
+    const socketUrl = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+      ? "http://127.0.0.1:4000"
+      : "https://algobuddy-socket-server.onrender.com";
+
     // Establish Socket connection
-    const socket = io("http://127.0.0.1:4000", {
+    const socket = io(socketUrl, {
       transports: ["websocket", "polling"]
     });
 

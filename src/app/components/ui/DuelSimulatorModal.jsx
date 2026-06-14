@@ -48,7 +48,11 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
   useEffect(() => {
     if (!isOpen) return;
 
-    const newSocket = io("http://127.0.0.1:4000", {
+    const socketUrl = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+      ? "http://127.0.0.1:4000"
+      : "https://algobuddy-socket-server.onrender.com";
+
+    const newSocket = io(socketUrl, {
       transports: ["websocket", "polling"]
     });
     setSocket(newSocket);
