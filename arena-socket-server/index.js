@@ -43,7 +43,7 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 4000;
 
 // JWT Authentication
-const SUPABASE_JWT_SECRET = process.env.SUPABASE_JWT_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_JWT_SECRET = process.env.SUPABASE_JWT_SECRET;
 
 function verifyAuthToken(token) {
   if (!token || !SUPABASE_JWT_SECRET) return null;
