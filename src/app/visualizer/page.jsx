@@ -10,7 +10,6 @@ import GraphModal from "@/app/components/models/GraphModal";
 import TutorialOverlay from "@/app/components/ui/TutorialOverlay";
 import BackToTop from "../components/ui/backtotop";
 import BookmarkSection from "@/app/components/ui/BookmarkSection";
-import DifficultySelector from "@/app/components/DifficultySelector";
 import KeyboardShortcuts from "@/app/components/KeyboardShortcuts";
 
 export const metadata = {
