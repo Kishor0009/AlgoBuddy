@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { useArenaProfile } from "@/app/hooks/useArenaProfile";
 import { useSheetProgress } from "@/app/hooks/useSheetProgress";
+import { practiceData } from "@/lib/practiceData";
 
 // Mock recent battle data
 const RECENT_BATTLES = [
@@ -126,8 +127,45 @@ function getInitials(name) {
 export default function ArenaPage() {
   const { user, loading } = useUser();
   const router = useRouter();
-  const { profile, leaderboard, matchHistory, dailyChallenge, loadingProfile, loadingLeaderboard } = useArenaProfile(user);
-  const { streakData } = useSheetProgress();
+  const { profile, leaderboard, matchHistory, loadingProfile, loadingLeaderboard } = useArenaProfile(user);
+  const { progress, getStatus, streakData } = useSheetProgress();
+
+  // Dynamically flatten all problems from practiceData (Zero Hardcoding!)
+  const allProblems = useMemo(() => {
+    const list = [];
+    practiceData.forEach((topic) => {
+      topic.subsections.forEach((sub) => {
+        sub.items.forEach((item) => {
+          list.push({
+            ...item,
+            topic: topic.title,
+            topicSlug: topic.slug,
+            time: item.difficulty === "Easy" ? "20m" : item.difficulty === "Medium" ? "30m" : "45m"
+          });
+        });
+      });
+    });
+    return list;
+  }, []);
+
+  const todaysChallenge = useMemo(() => {
+    const unsolvedProblems = allProblems.filter(
+      (problem) => getStatus(problem.id) !== "Completed"
+    );
+
+    if (unsolvedProblems.length === 0) return null;
+
+    const today = new Date().getDate();
+    const problem = unsolvedProblems[today % unsolvedProblems.length];
+    
+    return {
+      title: problem.name,
+      difficulty: problem.difficulty,
+      description: problem.theory?.summary || "Practice this coding challenge to improve your DSA skills.",
+      xpAward: problem.difficulty === "Easy" ? 100 : problem.difficulty === "Medium" ? 250 : 500,
+      practiceUrl: problem.practiceUrl
+    };
+  }, [allProblems, progress, getStatus]);
 
 
   const ensureLoggedIn = () => {
@@ -534,39 +572,49 @@ export default function ArenaPage() {
                         </span>
                       </div>
 
-                      <div className="flex gap-3.5 items-start p-3 bg-slate-50/50 dark:bg-neutral-900/30 border border-slate-100 dark:border-neutral-800/40 rounded-xl mb-3">
-                        <div className="p-2.5 bg-primary/10 text-primary dark:text-purple-400 rounded-lg shrink-0 font-mono text-sm font-extrabold">
-                          &lt;/&gt;
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <h4 className="text-sm font-bold text-slate-800 dark:text-neutral-100 truncate">
-                              {dailyChallenge ? dailyChallenge.title : "Reverse Linked List"}
-                            </h4>
-                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
-                              (dailyChallenge ? dailyChallenge.difficulty : "Easy") === "Easy" ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400" :
-                              (dailyChallenge ? dailyChallenge.difficulty : "Easy") === "Medium" ? "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" :
-                              "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"
-                            }`}>
-                              {dailyChallenge ? dailyChallenge.difficulty : "Easy"}
-                            </span>
+                      {todaysChallenge ? (
+                        <>
+                          <div className="flex gap-3.5 items-start p-3 bg-slate-50/50 dark:bg-neutral-900/30 border border-slate-100 dark:border-neutral-800/40 rounded-xl mb-3">
+                            <div className="p-2.5 bg-primary/10 text-primary dark:text-purple-400 rounded-lg shrink-0 font-mono text-sm font-extrabold">
+                              &lt;/&gt;
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <h4 className="text-sm font-bold text-slate-800 dark:text-neutral-100 truncate">
+                                  {todaysChallenge.title}
+                                </h4>
+                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
+                                  todaysChallenge.difficulty === "Easy" ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400" :
+                                  todaysChallenge.difficulty === "Medium" ? "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" :
+                                  "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"
+                                }`}>
+                                  {todaysChallenge.difficulty}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-400 dark:text-neutral-500 leading-normal truncate">
+                                {todaysChallenge.description}
+                              </p>
+                              <div className="text-[10px] text-primary dark:text-purple-400 font-semibold mt-1">
+                                Reward: +{todaysChallenge.xpAward} XP
+                              </div>
+                            </div>
                           </div>
-                          <p className="text-[11px] text-slate-400 dark:text-neutral-500 leading-normal truncate">
-                            {dailyChallenge ? dailyChallenge.description : "Reverse a singly linked list."}
-                          </p>
-                          <div className="text-[10px] text-primary dark:text-purple-400 font-semibold mt-1">
-                            Reward: +{dailyChallenge ? dailyChallenge.xpAward : 50} XP
-                          </div>
+                          
+                          <a
+                            href={todaysChallenge.practiceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold text-center transition block shadow-md shadow-primary/10"
+                          >
+                            Solve Now
+                          </a>
+                        </>
+                      ) : (
+                        <div className="p-6 text-center text-xs font-bold text-slate-500 dark:text-neutral-400">
+                          Wow, you've completed all problems! 🎉
                         </div>
-                      </div>
+                      )}
                     </div>
-
-                    <Link
-                      href="/practice"
-                      className="w-full py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold text-center transition block shadow-md shadow-primary/10"
-                    >
-                      Solve Now
-                    </Link>
                   </div>
                 </div>
 
