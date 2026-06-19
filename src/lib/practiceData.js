@@ -125,6 +125,28 @@ export const practiceData = [
               tip: "Kadane's Algorithm is a classic example of Dynamic Programming with O(1) space: it only needs the answer 'so far', not a full DP table. It's one of the most frequently asked array problems in interviews."
             }
           },
+          {
+            id: "two-sum",
+            name: "Two Sum",
+            difficulty: "Easy",
+            companies: ["amazon", "google", "microsoft", "meta", "apple"],
+            practiceUrl: "https://leetcode.com/problems/two-sum/",
+            visualizerUrl: "/visualizer/array/twosum",
+            theory: {
+              summary: "Given an array of integers and a target value, find the indices of the two numbers that add up to the target, using a HashMap for an optimal one-pass solution.",
+              steps: [
+                "Create an empty HashMap to store value → index pairs.",
+                "Traverse the array from left to right with index i.",
+                "Calculate complement = target - array[i].",
+                "Check if complement already exists in the HashMap.",
+                "If it exists, return [HashMap[complement], i] as the answer.",
+                "If not, insert array[i] → i into the HashMap and continue."
+              ],
+              complexity: { time: "O(N)", space: "O(N)" },
+              pitfalls: "Using the Brute Force nested-loop approach (checking every pair) leads to O(N²) time, which is too slow for large inputs. Also, forgetting to check the HashMap before inserting the current element can cause matching an element with itself.",
+              tip: "Two Sum is the most frequently asked entry-level problem in interviews. The HashMap trick of storing 'what we need' (the complement) is a pattern reused in many other array problems."
+            }
+          },
         ]
       },
       {
