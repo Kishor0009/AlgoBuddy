@@ -454,7 +454,14 @@ export default function ArenaPage() {
                     {/* 2nd Place (Logged in User) */}
                     <div className="flex flex-col items-center mt-6">
                       <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-xs shadow border-2 border-slate-600 mb-1.5 overflow-hidden">
-                        {leaderboard[1] ? (
+                        {leaderboard[1]?.avatarUrl ? (
+                          <img 
+                            src={leaderboard[1].avatarUrl} 
+                            alt={leaderboard[1]?.name || "User"} 
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover" 
+                          />
+                        ) : leaderboard[1] ? (
                           <div className="w-full h-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light flex items-center justify-center text-xs font-bold">
                             {getInitials(leaderboard[1]?.name || `User ${leaderboard[1]?.userId.substring(0,4)}`)}
                           </div>
@@ -476,7 +483,14 @@ export default function ArenaPage() {
                     {/* 1st Place */}
                     <div className="flex flex-col items-center">
                       <div className="w-12 h-12 rounded-full bg-amber-500 flex items-center justify-center font-bold text-sm shadow-md border-2 border-amber-400 mb-1.5 overflow-hidden">
-                        {leaderboard[0] ? (
+                        {leaderboard[0]?.avatarUrl ? (
+                          <img 
+                            src={leaderboard[0].avatarUrl} 
+                            alt={leaderboard[0]?.name || "User"} 
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover" 
+                          />
+                        ) : leaderboard[0] ? (
                            <div className="w-full h-full text-white flex items-center justify-center text-sm font-bold">
                              {getInitials(leaderboard[0]?.name || `User ${leaderboard[0]?.userId.substring(0,4)}`)}
                            </div>
@@ -494,7 +508,14 @@ export default function ArenaPage() {
                     {/* 3rd Place */}
                     <div className="flex flex-col items-center mt-8">
                       <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center font-bold text-xs shadow border-2 border-purple-500 mb-1.5 overflow-hidden">
-                        {leaderboard[2] ? (
+                        {leaderboard[2]?.avatarUrl ? (
+                          <img 
+                            src={leaderboard[2].avatarUrl} 
+                            alt={leaderboard[2]?.name || "User"} 
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover" 
+                          />
+                        ) : leaderboard[2] ? (
                            <div className="w-full h-full text-white flex items-center justify-center text-xs font-bold">
                              {getInitials(leaderboard[2]?.name || `User ${leaderboard[2]?.userId.substring(0,4)}`)}
                            </div>
@@ -663,6 +684,19 @@ export default function ArenaPage() {
                                 }`}>
                                 {rank}
                               </span>
+                              {/* Avatar Circle */}
+                              <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-neutral-700 flex items-center justify-center font-bold text-[9px] text-slate-600 dark:text-neutral-300 overflow-hidden shrink-0">
+                                {row.avatarUrl ? (
+                                  <img 
+                                    src={row.avatarUrl} 
+                                    alt={name} 
+                                    referrerPolicy="no-referrer"
+                                    className="w-full h-full object-cover" 
+                                  />
+                                ) : (
+                                  getInitials(name)
+                                )}
+                              </div>
                               <span className="font-semibold text-slate-850 dark:text-neutral-200">{name}</span>
                             </div>
                             <span className="font-bold text-slate-800 dark:text-neutral-300">{row.rating}</span>
@@ -795,8 +829,24 @@ export default function ArenaPage() {
                       const rank = row.rank || idx + 1;
                       const name = row.name || (row.userId ? `User ${row.userId.substring(0,4)}` : "Unknown");
                       return (
-                        <div key={rank} className="flex justify-between p-2.5 border-b border-slate-50 dark:border-neutral-800 text-xs">
-                          <span className="font-semibold">{rank}. {name}</span>
+                        <div key={rank} className="flex justify-between items-center p-2.5 border-b border-slate-50 dark:border-neutral-800 text-xs">
+                          <div className="flex items-center gap-3">
+                            <span className="font-semibold">{rank}.</span>
+                            {/* Avatar Circle */}
+                            <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-neutral-700 flex items-center justify-center font-bold text-[9px] text-slate-650 dark:text-neutral-300 overflow-hidden shrink-0">
+                              {row.avatarUrl ? (
+                                <img 
+                                  src={row.avatarUrl} 
+                                  alt={name} 
+                                  referrerPolicy="no-referrer"
+                                  className="w-full h-full object-cover" 
+                                  />
+                              ) : (
+                                getInitials(name)
+                              )}
+                            </div>
+                            <span className="font-semibold text-slate-850 dark:text-neutral-200">{name}</span>
+                          </div>
                           <span className="font-bold text-primary">{row.rating} Rating</span>
                         </div>
                       );
