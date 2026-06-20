@@ -168,6 +168,7 @@ export const sections = [
           { name: "Reverse", path: "/visualizer/linkedlist/operations/reverse" },
           { name: "Merge", path: "/visualizer/linkedlist/operations/merge" },
           { name: "Comparison", path: "/visualizer/linkedlist/operations/comparison" },
+          { name: "Sorting", path: "/visualizer/linkedlist/operations/sorting" },
         ],
       },
     ],

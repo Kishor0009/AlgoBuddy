@@ -415,6 +415,10 @@ const sections = [
             name: "Comparison",
             path: "/visualizer/linkedlist/operations/comparison",
           },
+          {
+            name: "Sorting",
+            path: "/visualizer/linkedlist/operations/sorting",
+          },
         ],
       },
     ],
