@@ -7,7 +7,7 @@ import { TrieNode, cloneTrie, insertGenerator, searchGenerator, prefixSearchGene
 
 const calculateNodeWidth = (node) => {
   if (!node) return 0;
-  const children = Object.values(node.children);
+  const children = Object.values(node.children).sort((a, b) => a.char.localeCompare(b.char));
   if (children.length === 0) return 1;
   let width = 0;
   for (const child of children) {
@@ -33,7 +33,7 @@ const layoutTrie = (node, x, y, allocatedWidth, nodesList = [], edgesList = [], 
     state: highlightedState,
   });
 
-  const children = Object.values(node.children);
+  const children = Object.values(node.children).sort((a, b) => a.char.localeCompare(b.char));
   if (children.length > 0) {
     let currentXStart = x - (allocatedWidth / 2);
     const widthPerUnit = allocatedWidth / calculateNodeWidth(node);
@@ -82,8 +82,9 @@ export default function TrieAnimation() {
     if (timerRef.current) clearTimeout(timerRef.current);
     setCurrentStepIdx(-1);
     setSteps([]);
+    setRoot(targetTrieRoot);
     setMessage("Playback reset. Click Start to begin operations.");
-  }, []);
+  }, [targetTrieRoot]);
 
   useEffect(() => {
     // Initial Root node setup
@@ -101,7 +102,7 @@ export default function TrieAnimation() {
     }
 
     resetPlayback();
-    const generator = insertGenerator(root, val, nodeIdCounter);
+    const generator = insertGenerator(targetTrieRoot, val, nodeIdCounter);
     const preCalculated = [...generator];
     
     setSteps(preCalculated);
@@ -124,7 +125,7 @@ export default function TrieAnimation() {
     }
 
     resetPlayback();
-    const preCalculated = [...searchGenerator(root, val)];
+    const preCalculated = [...searchGenerator(targetTrieRoot, val)];
     setSteps(preCalculated);
     setCurrentStepIdx(0);
     setIsAnimating(true);
@@ -139,7 +140,7 @@ export default function TrieAnimation() {
     }
 
     resetPlayback();
-    const preCalculated = [...prefixSearchGenerator(root, val)];
+    const preCalculated = [...prefixSearchGenerator(targetTrieRoot, val)];
     setSteps(preCalculated);
     setCurrentStepIdx(0);
     setIsAnimating(true);
@@ -151,7 +152,10 @@ export default function TrieAnimation() {
     setRoot(initialRoot);
     setTargetTrieRoot(initialRoot);
     setNodeIdCounter(0);
-    resetPlayback();
+    setIsAnimating(false);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setCurrentStepIdx(-1);
+    setSteps([]);
     setMessage("Trie cleared.");
   };
 
