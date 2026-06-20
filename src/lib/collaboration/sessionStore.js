@@ -905,16 +905,23 @@ export async function backfillJoinCodeIndex() {
 }
 
 /**
- * Lists publicly visible collaboration sessions using a sorted-set secondary
- * index instead of redis.keys(). Supports cursor-based pagination via a
- * composite cursor (score::sessionId) so callers can page through results
- * without a keyspace scan.  The composite cursor avoids skipping or
- * duplicating entries when multiple sessions share the same timestamp score.
+ * Lists publicly visible collaboration sessions using the dedicated public
+ * sorted-set index (SESSION_PUBLIC_INDEX_KEY) instead of the main index.
+ * Because every entry in this index is already public, no visibility filtering
+ * is needed inside the loop and the offset-skipping bug described in issue #1623
+ * cannot occur.
+ *
+ * Pagination uses a composite cursor ("score::rank-offset") so that pages
+ * remain stable even when multiple sessions share the same millisecond score.
+ * The cursor encodes:
+ *   score  — the ZRANGE BYSCORE upper bound for the next page
+ *   offset — how many entries to skip at that exact score boundary
+ *            (handles ties without re-fetching already-returned entries)
  *
  * @param {object}  options
  * @param {number}  [options.limit=50]    Max results to return (capped at 100).
  * @param {string}  [options.cursor]      Composite cursor from the previous
- *                                        page's nextCursor (format "score::id").
+ *                                        page's nextCursor ("score::offset").
  *                                        Omit for the first page.
  * @returns {{ sessions: object[], nextCursor: string|null }}
  */
@@ -934,12 +941,11 @@ function clampLimit(value) {
 export async function listCollaborationSessions({ limit, cursor } = {}) {
   ensureRedisConnection();
   const pageSize = clampLimit(limit);
-  const parsedCursor = parseCursor(cursor);
-  const maxScore = parsedCursor.score;
-  const offset = parsedCursor.offset;
+  const { score: maxScore, offset: startOffset } = parseCursor(cursor);
 
   if (shouldTryRedis()) {
     try {
+      // Probabilistic cleanup of entries that have passed their TTL.
       if (Math.random() < 0.05) {
         const cutoffMs = Date.now() - SESSION_TTL_MS;
         await redis.zremrangebyscore(SESSION_INDEX_KEY, "-inf", cutoffMs);
@@ -948,87 +954,89 @@ export async function listCollaborationSessions({ limit, cursor } = {}) {
 
       const sessions = [];
       const expiredIds = [];
-      let currentMaxScore = maxScore;
-      let currentOffset = offset;
-      let lastProcessedScore = null;
-      let processedCountAtLastScore = 0;
-      let hasMore = false;
+      // staleIds — entries present in public index whose stored session is no
+      // longer public (visibility changed after indexing). Remove them lazily.
+      const staleIds = [];
 
-      while (sessions.length < pageSize) {
-        const fetchSize = pageSize - sessions.length + MAX_EXPIRED_BUFFER;
-        const ids = await redis.zrange(SESSION_PUBLIC_INDEX_KEY, currentMaxScore, "-inf", {
-          byScore: true,
-          rev: true,
-          limit: { offset: currentOffset, count: fetchSize },
-        });
+      // Fetch one extra entry beyond pageSize so we can detect whether a next
+      // page exists without a separate COUNT query.
+      const fetchCount = pageSize + 1 + MAX_EXPIRED_BUFFER;
+      const ids = await redis.zrange(SESSION_PUBLIC_INDEX_KEY, maxScore, "-inf", {
+        byScore: true,
+        rev: true,
+        limit: { offset: startOffset, count: fetchCount },
+      });
 
-        if (!ids || ids.length === 0) {
-          hasMore = false;
-          break;
-        }
-
+      if (ids && ids.length > 0) {
         const values = await redis.mget(...ids.map(sessionKey));
         const scores = await redis.zmscore(SESSION_PUBLIC_INDEX_KEY, ...ids);
 
         for (let i = 0; i < ids.length; i++) {
+          // Stop collecting once we have a full page; the remaining entries
+          // only tell us whether a next page exists.
+          if (sessions.length >= pageSize) break;
+
           const id = ids[i];
           const session = values[i];
-          let score = scores[i];
-          
-          if (score === null) score = lastProcessedScore || currentMaxScore;
 
-          if (score === lastProcessedScore) {
-            processedCountAtLastScore++;
-          } else {
-            lastProcessedScore = score;
-            processedCountAtLastScore = 1;
-            if (lastProcessedScore === currentMaxScore) {
-               processedCountAtLastScore += currentOffset;
-            }
-          }
-
-          if (session && session.visibility === "public") {
-            sessions.push(discoverableSessionView(session, { includeJoinCode: false }));
-          } else if (!session) {
+          if (!session) {
+            // Key expired in Redis but the sorted-set member was not yet pruned.
             expiredIds.push(id);
-          } else if (session && session.visibility !== "public") {
-            await redis.zrem(SESSION_PUBLIC_INDEX_KEY, id);
+            continue;
           }
 
-          if (sessions.length >= pageSize) {
-            if (i < ids.length - 1 || ids.length === fetchSize) {
-              hasMore = true;
-            } else {
-              hasMore = false;
+          if (session.visibility !== "public") {
+            // Entry was indexed as public but visibility was later changed.
+            // Remove it from the public index so future queries skip it.
+            staleIds.push(id);
+            continue;
+          }
+
+          sessions.push(discoverableSessionView(session, { includeJoinCode: false }));
+        }
+
+        // Build the next-page cursor from the last entry we actually returned.
+        let nextCursor = null;
+        if (sessions.length === pageSize) {
+          // Find the score + tie-offset of the last returned entry so the next
+          // call starts immediately after it.
+          const lastReturnedIndex = sessions.length - 1;
+          // ids[] is 1-to-1 with values[] (expired/stale entries were skipped
+          // without incrementing sessions[]), so we need the index in ids[]
+          // that corresponds to the last session we pushed.
+          let idIdx = 0;
+          let pushed = 0;
+          for (let i = 0; i < ids.length; i++) {
+            const s = values[i];
+            if (!s || s.visibility !== "public") continue;
+            if (pushed === lastReturnedIndex) { idIdx = i; break; }
+            pushed++;
+          }
+
+          const lastScore = scores[idIdx];
+          if (lastScore !== null && lastScore !== undefined) {
+            // Count how many entries at this same score have already been
+            // returned (including any from previous pages at this score).
+            let tieCount = startOffset;
+            for (let i = 0; i <= idIdx; i++) {
+              if (scores[i] === lastScore) tieCount++;
             }
-            break;
+            nextCursor = `${lastScore}::${tieCount}`;
           }
         }
 
-        if (sessions.length >= pageSize) {
-          break;
+        // Lazy cleanup — do not block the response.
+        if (expiredIds.length > 0) removeFromSessionIndex(expiredIds).catch(() => {});
+        if (staleIds.length > 0) {
+          redis.zrem(SESSION_PUBLIC_INDEX_KEY, ...staleIds).catch(() => {});
         }
 
-        if (ids.length < fetchSize) {
-          hasMore = false;
-          break;
-        }
-
-        currentMaxScore = lastProcessedScore;
-        currentOffset = processedCountAtLastScore;
-      }
-
-      if (expiredIds.length > 0) {
-        await removeFromSessionIndex(expiredIds);
-      }
-
-      let nextCursor = null;
-      if (hasMore && lastProcessedScore !== null) {
-        nextCursor = `${lastProcessedScore}::${processedCountAtLastScore}`;
+        markRedisOnline();
+        return { sessions, nextCursor };
       }
 
       markRedisOnline();
-      return { sessions, nextCursor };
+      return { sessions: [], nextCursor: null };
     } catch (err) {
       markRedisOffline(err);
     }
@@ -1050,16 +1058,16 @@ export async function listCollaborationSessions({ limit, cursor } = {}) {
       return st <= maxScore;
     });
     if (startIndex >= 0) {
-      startIndex += offset;
+      startIndex += startOffset;
     } else {
       return { sessions: [], nextCursor: null };
     }
   }
 
   const page = memorySessionsList.slice(startIndex, startIndex + pageSize);
-  const hasMore = startIndex + pageSize < memorySessionsList.length;
+  const memHasMore = startIndex + pageSize < memorySessionsList.length;
   let nextCursor = null;
-  if (hasMore && page.length > 0) {
+  if (memHasMore && page.length > 0) {
     const last = page[page.length - 1];
     const lastScore = new Date(last.updatedAt).getTime();
     let scoreCount = 0;
@@ -1069,7 +1077,7 @@ export async function listCollaborationSessions({ limit, cursor } = {}) {
     }
     let nextOffset = scoreCount;
     if (lastScore === maxScore) {
-       nextOffset = offset + scoreCount;
+      nextOffset = startOffset + scoreCount;
     }
     nextCursor = `${lastScore}::${nextOffset}`;
   }
