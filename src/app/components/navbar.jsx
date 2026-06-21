@@ -56,7 +56,6 @@ function getInitials(name) {
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [theme, setTheme] = useState("light");
   const [themeMounted, setThemeMounted] = useState(false);
@@ -119,6 +118,7 @@ export default function Navbar() {
     const handleEscape = (e) => {
       if (e.key === "Escape") {
         setMenuOpen(false);
+        setUserMenuOpen(false);
       }
     };
 
@@ -167,15 +167,15 @@ export default function Navbar() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setUser(null);
-    setMenuOpen(false);
     if (typeof window !== "undefined") {
       localStorage.removeItem("algobuddy_practice_progress");
       localStorage.removeItem("algobuddy_current_streak");
       localStorage.removeItem("algobuddy_best_streak");
       localStorage.removeItem("algobuddy_last_active_date");
       localStorage.removeItem("PROBLEM_BOOKMARKS");
-      window.location.href = "/";
     }
+    setMenuOpen(false);
+    window.location.href = "/";
   };
 
   const isActive = (href) => {
