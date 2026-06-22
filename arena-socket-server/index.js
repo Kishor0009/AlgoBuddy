@@ -179,20 +179,31 @@ const ATOMIC_DISCONNECT_CLEANUP_SCRIPT = `
 
   local matchId = redis.call('HGET', socketKey, 'matchId')
   local opponentSocketId = ''
+  local opponentUserId = ''
 
   if matchId then
     local matchStr = redis.call('GET', 'match:' .. matchId)
     if matchStr then
-      -- String replacement of status: "in-progress" to "completed"
-      local updatedMatchStr = string.gsub(matchStr, '"status"%s*:%s*"in%-progress"', '"status":"completed"')
+      -- Set disconnected flag instead of marking completed; the remaining
+      -- player claims the win via match_complete, preventing race conditions
+      -- where the disconnect handler overwrites a legitimate result.
+      local updatedMatchStr = string.gsub(matchStr, '"status"%s*:%s*"in%-progress"', '"status":"disconnected"')
       redis.call('SET', 'match:' .. matchId, updatedMatchStr, 'EX', 3600)
-      
-      -- Extract socketIds using pattern matching
+
+      -- Extract socketIds and userIds using pattern matching
+      -- Match players array entries to find opponent (the one whose socketId != disconnecting socket)
+      local idx = 1
       for sId in string.gmatch(matchStr, '"socketId"%s*:%s*"([^"]+)"') do
         if sId ~= socketId then
           opponentSocketId = sId
         end
         redis.call('HDEL', 'socket:' .. sId, 'matchId')
+      end
+      -- Extract opponent userId from match data
+      for uId in string.gmatch(matchStr, '"userId"%s*:%s*"([^"]+)"') do
+        if uId ~= userId then
+          opponentUserId = uId
+        end
       end
     end
   end
@@ -200,7 +211,7 @@ const ATOMIC_DISCONNECT_CLEANUP_SCRIPT = `
   redis.call('DEL', socketKey)
   redis.call('DEL', 'ratelimit:' .. socketId)
 
-  return '{"opponentSocketId":"' .. opponentSocketId .. '"}'
+  return '{"opponentSocketId":"' .. opponentSocketId .. '","opponentUserId":"' .. opponentUserId .. '"}'
 `;
 
 const io = new Server(server, {
@@ -615,8 +626,8 @@ io.on("connection", async (socket) => {
 
       const result = JSON.parse(resultStr);
 
-      if (result.opponentSocketId) {
-        io.to(result.opponentSocketId).emit("opponent_disconnected", { winnerId: socket.data.userId });
+      if (result.opponentSocketId && result.opponentUserId) {
+        io.to(result.opponentSocketId).emit("opponent_disconnected", { winnerId: result.opponentUserId });
       }
 
       console.log(`User disconnected: ${socket.id}`);
