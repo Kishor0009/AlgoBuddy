@@ -20,6 +20,7 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
 
   const logContainerRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const opponentIdleTimerRef = useRef(null);
 
   // Formatting time helper
   const formatTime = (secs) => {
@@ -146,10 +147,23 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
     });
 
     newSocket.on("opponent_typing_status", (data) => {
+      if (opponentIdleTimerRef.current) {
+        clearTimeout(opponentIdleTimerRef.current);
+        opponentIdleTimerRef.current = null;
+      }
+
       if (data.isTyping) {
         setOppCode("// Opponent is typing...");
       } else {
         setOppCode("// Opponent is thinking...");
+        
+        // Transition to idle after 15 seconds of inactivity
+        opponentIdleTimerRef.current = setTimeout(() => {
+          setOppCode((prev) => {
+            if (prev.includes("thinking")) return "// Opponent went idle...";
+            return prev;
+          });
+        }, 15000);
       }
     });
 
@@ -177,9 +191,10 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
     });
 
     return () => {
+      if (opponentIdleTimerRef.current) clearTimeout(opponentIdleTimerRef.current);
       newSocket.disconnect();
     };
-  }, [isOpen, opponent]);
+  }, [isOpen, opponent?.matchId]);
 
   const handleCodeChange = (value) => {
     setUserCode(value);

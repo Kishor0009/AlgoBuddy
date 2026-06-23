@@ -491,7 +491,9 @@ io.on("connection", async (socket) => {
       const match = JSON.parse(matchStr);
       const isParticipant = match.players && match.players.some(p => p.userId === socket.data.userId);
       if (!isParticipant) return;
+      
       socket.join(data.matchId);
+      await redisClient.hset(`{arena}:socket:${socket.id}`, "matchId", data.matchId);
     } catch (error) {
       console.error(`[join_match] Error for user ${socket.data.userId}:`, error);
     }
