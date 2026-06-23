@@ -32,7 +32,14 @@ function isAllowedVercelOrigin(origin) {
 function isOriginAllowed(origin, callback) {
   // Allow requests with no origin (Render health checks, server-to-server)
   if (!origin) return callback(null, true);
-  if (ALLOWED_ORIGINS.includes(origin) || isAllowedVercelOrigin(origin)) {
+  
+  if (
+    ALLOWED_ORIGINS.includes(origin) || 
+    isAllowedVercelOrigin(origin) ||
+    origin.startsWith("http://localhost:") ||
+    origin.startsWith("http://127.0.0.1:") ||
+    origin.startsWith("http://192.168.")
+  ) {
     callback(null, true);
   } else {
     callback(new Error("Not allowed by CORS"));
