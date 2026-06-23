@@ -62,6 +62,8 @@ export default function SmartRevisionFlashcards() {
   const [challengeCompleted, setChallengeCompleted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState("default");
+  const [weakTopics, setWeakTopics] = useState([]);
+  const [recommendedDifficulty, setRecommendedDifficulty] = useState("Easy");
 
   const topics = [
   "All",
@@ -114,6 +116,15 @@ useEffect(() => {
   generateDailyChallenge();
 }, []);
 
+useEffect(() => {
+  generateAIRecommendations();
+}, [
+  history,
+  easyCompleted,
+  mediumCompleted,
+  hardCompleted,
+]);
+
       if (currentCards.length === 0) {
   return (
     <div className="bg-slate-900 text-white p-6 rounded-xl shadow-lg max-w-xl mx-auto">
@@ -132,6 +143,28 @@ const difficultyPoints = {
   Easy: 5,
   Medium: 10,
   Hard: 20,
+};
+
+const generateAIRecommendations = () => {
+  const topicCounts = {};
+
+  history.forEach((topic) => {
+    topicCounts[topic] = (topicCounts[topic] || 0) + 1;
+  });
+
+  const weak = Object.keys(topicCounts)
+    .sort((a, b) => topicCounts[a] - topicCounts[b])
+    .slice(0, 3);
+
+  setWeakTopics(weak);
+
+  if (hardCompleted < 5) {
+    setRecommendedDifficulty("Hard");
+  } else if (mediumCompleted < 5) {
+    setRecommendedDifficulty("Medium");
+  } else {
+    setRecommendedDifficulty("Easy");
+  }
 };
 
 const totalCards =
@@ -411,6 +444,37 @@ setHistory((prev) => [
   <p>Hard Completed: {hardCompleted}</p>
 
   <p>Daily Streak: 🔥 {streak} Days</p>
+</div>
+
+<div className="mt-5 bg-slate-800 p-4 rounded-lg">
+  <h3 className="font-bold text-lg mb-3">
+    🤖 AI Personalized Revision
+  </h3>
+
+  <p className="mb-2">
+    Recommended Difficulty:
+    <span className="ml-2 text-green-400 font-semibold">
+      {recommendedDifficulty}
+    </span>
+  </p>
+
+  <p className="mb-2">
+    Topics Needing Revision:
+  </p>
+
+  <ul className="text-sm text-gray-300">
+    {weakTopics.length > 0 ? (
+      weakTopics.map((topic, idx) => (
+        <li key={idx}>📌 {topic}</li>
+      ))
+    ) : (
+      <li>No revision data yet.</li>
+    )}
+  </ul>
+
+  <p className="mt-3 text-purple-400">
+    AI Suggestion: Focus on weaker topics first.
+  </p>
 </div>
 
 <div className="mt-4">
